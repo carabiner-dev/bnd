@@ -9,7 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/in-toto/attestation v1.1.1
 	github.com/sigstore/protobuf-specs v0.4.0
-	github.com/sigstore/sigstore v1.8.14
+	github.com/sigstore/sigstore v1.8.15
 	github.com/sigstore/sigstore-go v0.7.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
