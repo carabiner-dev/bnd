@@ -1,10 +1,9 @@
 module github.com/carabiner-dev/bnd
 
 go 1.23.5
-
 require (
 	github.com/carabiner-dev/ampel v0.0.0-20250209210344-7b306497c927
-	github.com/carabiner-dev/github v0.0.0-20250210222226-442fdacc1d16
+	github.com/carabiner-dev/github v0.1.1
 	github.com/carabiner-dev/hasher v0.1.0
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/in-toto/attestation v1.1.1
