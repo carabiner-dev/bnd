@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/theupdateframework/go-tuf/v2 v2.0.2
-	golang.org/x/term v0.31.0
+	golang.org/x/term v0.32.0
 	google.golang.org/protobuf v1.36.6
 	sigs.k8s.io/release-sdk v0.12.2
 	sigs.k8s.io/release-utils v0.11.1
@@ -122,7 +122,7 @@ require (
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.29.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
