@@ -11,11 +11,11 @@ require (
 	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
 	github.com/sigstore/protobuf-specs v0.4.1
 	github.com/sigstore/sigstore v1.9.4
-	github.com/sigstore/sigstore-go v0.7.3
+	github.com/sigstore/sigstore-go v0.7.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/theupdateframework/go-tuf/v2 v2.1.1
+	github.com/theupdateframework/go-tuf/v2 v2.0.2
 	golang.org/x/term v0.32.0
 	google.golang.org/protobuf v1.36.6
 	sigs.k8s.io/release-sdk v0.12.2
@@ -32,7 +32,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
-	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/coreos/go-oidc/v3 v3.14.1 // indirect
