@@ -5,9 +5,11 @@ package bnd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"github.com/theupdateframework/go-tuf/v2/metadata/fetcher"
+	"sigs.k8s.io/release-utils/version"
 )
 
 const SigstorePublicGoodBaseURL = "https://tuf-repo-cdn.sigstore.dev"
@@ -59,7 +61,12 @@ func GetTufRoot(opts *TufOptions) ([]byte, error) {
 
 // defaultfetcher returns a default TUF fetcher configured with the bind UA
 func defaultfetcher() fetcher.Fetcher {
-	f := fetcher.DefaultFetcher{}
-	f.SetHTTPUserAgent("bind/v1.0.0")
-	return &f
+	f := fetcher.NewDefaultFetcher()
+	agentString := fmt.Sprintf(
+		"Bnd/%s (%s; %s; Carabiner Systems; https://github.com/carabiner-dev/bnd)",
+		version.GetVersionInfo().GitVersion,
+		runtime.GOOS, runtime.GOARCH,
+	)
+	f.SetHTTPUserAgent(agentString)
+	return f
 }

@@ -70,7 +70,7 @@ func (s *Signer) SignStatement(data []byte) (*v1.Bundle, error) {
 
 	// Run the STS providers to check for ambien credentials
 	if err := s.bundleSigner.GetAmbienTokens(&s.Options); err != nil {
-		return nil, fmt.Errorf("fetching ambien credentials: %w", err)
+		return nil, fmt.Errorf("fetching ambient credentials: %w", err)
 	}
 
 	// Get the ID token
