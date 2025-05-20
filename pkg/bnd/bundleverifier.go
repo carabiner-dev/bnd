@@ -47,7 +47,7 @@ func (bv *bundleVerifier) BuildSigstoreVerifier(opts *VerificationOptions) (Veri
 	}
 
 	// Create the verifier
-	sigstoreVerifier, err := verify.NewSignedEntityVerifier(trustedMaterial, bv.buildVerifierConfig(opts)...)
+	sigstoreVerifier, err := verify.NewVerifier(trustedMaterial, bv.buildVerifierConfig(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("building sigstore verifier: %w", err)
 	}
