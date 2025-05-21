@@ -108,6 +108,8 @@ func printEnvelopeDetails(reader io.Reader) error {
 		return fmt.Errorf("parsing bundle: %w", err)
 	}
 
+	verifyErr := envelope.Verify()
+
 	att, err := tool.ExtractAttestation(envelope)
 	if err != nil {
 		return fmt.Errorf("unable to extract attestation from bundle")
@@ -119,7 +121,23 @@ func printEnvelopeDetails(reader io.Reader) error {
 	}
 
 	fmt.Printf("✉️  Envelope Media Type: %s\n", mediatype)
-	fmt.Printf("🔏 Signer identity: [not yet implemented]\n")
+	idstr := "[✗ not signed]\n"
+	if verifyErr != nil {
+		idstr = fmt.Sprintf("[error: %s]", err)
+	}
+	if att.GetVerification() != nil {
+		idstr = "[No identity found]\n"
+		if att.GetVerification().GetSignature().GetIdentities() != nil {
+			idstr = ""
+			for i, id := range att.GetVerification().GetSignature().GetIdentities() {
+				if i > 0 {
+					idstr += strings.Repeat(" ", 19)
+				}
+				idstr += id.Slug() + "\n"
+			}
+		}
+	}
+	fmt.Printf("🔏 Signer identity: %s", idstr)
 	if att != nil {
 		fmt.Println("📃 Attestation Details:")
 		fmt.Printf("   Predicate Type: %s", att.GetPredicateType())
