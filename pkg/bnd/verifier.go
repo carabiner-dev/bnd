@@ -54,13 +54,16 @@ func (v *Verifier) VerifyInlineBundle(bundleContents []byte) (*verify.Verificati
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling JSON: %w", err)
 	}
+	return v.VerifyParsedBundle(&bndl)
+}
 
+func (v *Verifier) VerifyParsedBundle(bndl *bundle.Bundle) (*verify.VerificationResult, error) {
 	vrfr, err := v.bundleVerifier.BuildSigstoreVerifier(&v.Options)
 	if err != nil {
 		return nil, fmt.Errorf("creating verifier: %w", err)
 	}
 
-	result, err := v.bundleVerifier.RunVerification(&v.Options, vrfr, &bndl)
+	result, err := v.bundleVerifier.RunVerification(&v.Options, vrfr, bndl)
 	if err != nil {
 		return nil, fmt.Errorf("verifying bundle: %w", err)
 	}
