@@ -74,7 +74,10 @@ data about the bundle.
 			fmt.Println("\n🔎  Bundle Details:")
 			fmt.Println("-------------------")
 
-			renderer := render.New()
+			renderer, err := render.New()
+			if err != nil {
+				return err
+			}
 			if strings.HasSuffix(opts.Path, ".jsonl") {
 				for i, r := range jsonl.IterateBundle(reader) {
 					if r == nil {

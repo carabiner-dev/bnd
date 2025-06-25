@@ -14,16 +14,25 @@ import (
 	"github.com/carabiner-dev/bnd/pkg/bundle"
 )
 
-func New() *Renderer {
-	return &Renderer{}
+func New(fn ...FnOpt) (*Renderer, error) {
+	opts := defaultOptions
+	for _, f := range fn {
+		if err := f(&opts); err != nil {
+			return nil, err
+		}
+	}
+	return &Renderer{
+		Options: opts,
+	}, nil
 }
 
-type Renderer struct{}
+type Renderer struct {
+	Options Options
+}
 
 // DisplayEnvelopeDetails prints the details of an attestation
-func (*Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Envelope) error {
+func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Envelope) error {
 	tool := bundle.NewTool()
-	verifyErr := envelope.Verify()
 
 	att, err := tool.ExtractAttestation(envelope)
 	if err != nil {
@@ -37,20 +46,26 @@ func (*Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Envelo
 
 	fmt.Printf("✉️  Envelope Media Type: %s\n", mediatype)
 	idstr := "[✗ not signed]\n"
-	if verifyErr != nil {
-		idstr = fmt.Sprintf("[error: %s]\n", verifyErr)
-	}
-	if att.GetVerification() != nil {
-		idstr = "[No identity found]\n"
-		if att.GetVerification().GetSignature().GetIdentities() != nil {
-			idstr = ""
-			for i, id := range att.GetVerification().GetSignature().GetIdentities() {
-				if i > 0 {
-					idstr += strings.Repeat(" ", 19)
+
+	if r.Options.VerifySignatures {
+		verifyErr := envelope.Verify()
+		if verifyErr != nil {
+			idstr = fmt.Sprintf("[error: %s]\n", verifyErr)
+		}
+		if att.GetVerification() != nil {
+			idstr = "[No identity found]\n"
+			if att.GetVerification().GetSignature().GetIdentities() != nil {
+				idstr = ""
+				for i, id := range att.GetVerification().GetSignature().GetIdentities() {
+					if i > 0 {
+						idstr += strings.Repeat(" ", 19)
+					}
+					idstr += id.Slug() + "\n"
 				}
-				idstr += id.Slug() + "\n"
 			}
 		}
+	} else {
+		idstr = "[not verified]\n"
 	}
 	fmt.Printf("🔏 Signer identity: %s", idstr)
 	if att != nil {
