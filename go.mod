@@ -8,7 +8,6 @@ require (
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/go-git/go-git/v5 v5.16.2
-	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.4.3
 	github.com/sigstore/sigstore v1.9.5
@@ -49,6 +48,7 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect

@@ -85,8 +85,6 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oMMlVBbn9M=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
-github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250624131420-719f43cc24dd h1:NSd0Y5uoPtpCCDyhmTuiAmdDwdx8pq6Q8nzzhmoxr7c=
-github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250624131420-719f43cc24dd/go.mod h1:ukILmafFM9No+4C5pM89sUs+7RFtB1We9DB9+OvItEM=
 github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250625055119-2ae04903ae66 h1:90vTDpwtvAhjdLGFkO5x4ARBwINJ+a2cop/CGkK1wF4=
 github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250625055119-2ae04903ae66/go.mod h1:ukILmafFM9No+4C5pM89sUs+7RFtB1We9DB9+OvItEM=
 github.com/carabiner-dev/ghrfs v0.3.2 h1:SBxmC7H2efJzebzrpZNsXB/03eZTeBORguXvKftpif4=
