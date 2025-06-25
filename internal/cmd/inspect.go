@@ -7,14 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
-	ampelb "github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"
+	"github.com/carabiner-dev/bnd/pkg/render"
 )
 
 type inspectOptions struct {
@@ -73,6 +74,10 @@ data about the bundle.
 			fmt.Println("\n🔎  Bundle Details:")
 			fmt.Println("-------------------")
 
+			renderer, err := render.New()
+			if err != nil {
+				return err
+			}
 			if strings.HasSuffix(opts.Path, ".jsonl") {
 				for i, r := range jsonl.IterateBundle(reader) {
 					if r == nil {
@@ -80,7 +85,7 @@ data about the bundle.
 						continue
 					}
 					fmt.Printf("Attestation #%d\n", i)
-					if err := printEnvelopeDetails(r); err != nil {
+					if err := printEnvelopeDetails(renderer, r); err != nil {
 						return err
 					}
 				}
@@ -88,14 +93,14 @@ data about the bundle.
 			}
 
 			// If it's just a single json:
-			return printEnvelopeDetails(reader)
+			return printEnvelopeDetails(renderer, reader)
 		},
 	}
 	opts.AddFlags(extractCmd)
 	parentCmd.AddCommand(extractCmd)
 }
 
-func printEnvelopeDetails(reader io.Reader) error {
+func printEnvelopeDetails(renderer *render.Renderer, reader io.Reader) error {
 	tool := bundle.NewTool()
 
 	// Parse the bundle JSON
@@ -107,71 +112,5 @@ func printEnvelopeDetails(reader io.Reader) error {
 		}
 		return fmt.Errorf("parsing bundle: %w", err)
 	}
-
-	verifyErr := envelope.Verify()
-
-	att, err := tool.ExtractAttestation(envelope)
-	if err != nil {
-		return fmt.Errorf("unable to extract attestation from bundle")
-	}
-
-	mediatype := "unknown"
-	if bndl, ok := envelope.(*ampelb.Envelope); ok {
-		mediatype = bndl.GetMediaType()
-	}
-
-	fmt.Printf("✉️  Envelope Media Type: %s\n", mediatype)
-	idstr := "[✗ not signed]\n"
-	if verifyErr != nil {
-		idstr = fmt.Sprintf("[error: %s]", err)
-	}
-	if att.GetVerification() != nil {
-		idstr = "[No identity found]\n"
-		if att.GetVerification().GetSignature().GetIdentities() != nil {
-			idstr = ""
-			for i, id := range att.GetVerification().GetSignature().GetIdentities() {
-				if i > 0 {
-					idstr += strings.Repeat(" ", 19)
-				}
-				idstr += id.Slug() + "\n"
-			}
-		}
-	}
-	fmt.Printf("🔏 Signer identity: %s", idstr)
-	if att != nil {
-		fmt.Println("📃 Attestation Details:")
-		fmt.Printf("   Predicate Type: %s", att.GetPredicateType())
-		if att.GetPredicateType() == "" {
-			fmt.Print("[not defined]")
-		}
-		fmt.Println("")
-
-		if att.GetSubjects() != nil {
-			fmt.Printf("   Attestation Subjects:\n")
-			for _, s := range att.GetSubjects() {
-				if s.GetName() != "" {
-					fmt.Println("   - " + s.GetName())
-				}
-
-				i := 0
-				for algo, val := range s.GetDigest() {
-					if i == 0 {
-						if s.GetName() == "" {
-							fmt.Print("   - ")
-						} else {
-							fmt.Print("     ")
-						}
-						fmt.Printf("%s: %s\n", algo, val)
-					}
-					i++
-				}
-			}
-		} else {
-			fmt.Println("⚠️ Attestation has no subjects")
-		}
-	} else {
-		fmt.Println("⚠️ No attestation found in envelope")
-	}
-	fmt.Println("")
-	return nil
+	return renderer.DisplayEnvelopeDetails(os.Stdout, envelope)
 }
