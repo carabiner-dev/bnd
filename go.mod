@@ -3,11 +3,12 @@ module github.com/carabiner-dev/bnd
 go 1.24.3
 
 require (
-	github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250521004715-85b637ea9193
+	github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250625055119-2ae04903ae66
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/go-git/go-git/v5 v5.16.2
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.4.3
 	github.com/sigstore/sigstore v1.9.5
@@ -30,9 +31,10 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/carabiner-dev/ghrfs v0.3.2 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
-	github.com/carabiner-dev/vcslocator v0.2.2 // indirect
+	github.com/carabiner-dev/vcslocator v0.3.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
@@ -47,7 +49,6 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
