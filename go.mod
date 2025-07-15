@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/in-toto/attestation v1.1.2
-	github.com/sigstore/protobuf-specs v0.4.3
+	github.com/sigstore/protobuf-specs v0.5.0
 	github.com/sigstore/sigstore v1.9.5
 	github.com/sigstore/sigstore-go v1.0.0
 	github.com/sirupsen/logrus v1.9.3
