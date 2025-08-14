@@ -11,15 +11,15 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert/yaml"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 )
 
 type predicateOptions struct {
@@ -126,7 +126,7 @@ func addPredicate(parentCmd *cobra.Command) {
 			// Transfer the files to the paths array
 			vals := []string{}
 			for _, v := range opts.SubjectValues {
-				if util.Exists(v) {
+				if helpers.Exists(v) {
 					opts.SubjectPaths = append(opts.SubjectPaths, v)
 					continue
 				}

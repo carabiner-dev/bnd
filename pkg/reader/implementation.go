@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 type clientImplementation interface {

@@ -6,12 +6,11 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/carabiner-dev/signer"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/log"
 	"sigs.k8s.io/release-utils/version"
-
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 const appname = "bnd"
@@ -85,13 +84,13 @@ func Execute() {
 }
 
 // getSigner builds a bnd signer from a sigstore options set
-func getSigner(opts *sigstoreOptions, sopts *signOptions) *bnd.Signer {
-	signer := bnd.NewSigner()
-	signer.Options.TufRootPath = opts.TufRootPath
-	signer.Options.TufRootURL = opts.TufRootURL
-	signer.Options.OidcClientID = sopts.OidcClientID
-	signer.Options.OidcIssuer = sopts.OidcIssuer
-	signer.Options.OidcRedirectURL = sopts.OidcRedirectURL
+func getSigner(opts *sigstoreOptions, sopts *signOptions) *signer.Signer {
+	s := signer.NewSigner()
+	s.Options.TufRootPath = opts.TufRootPath
+	s.Options.TufRootURL = opts.TufRootURL
+	s.Options.OidcClientID = sopts.OidcClientID
+	s.Options.OidcIssuer = sopts.OidcIssuer
+	s.Options.OidcRedirectURL = sopts.OidcRedirectURL
 
-	return signer
+	return s
 }

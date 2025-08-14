@@ -4,9 +4,8 @@
 package cmd
 
 import (
+	"github.com/carabiner-dev/signer/options"
 	"github.com/spf13/cobra"
-
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 type signOptions struct {
@@ -26,14 +25,14 @@ func (so *signOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVar(
-		&so.OidcIssuer, "oidc-issuer", bnd.DefaultSignerOptions.OidcIssuer, "OIDC issuer URL",
+		&so.OidcIssuer, "oidc-issuer", options.DefaultSigner.OidcIssuer, "OIDC issuer URL",
 	)
 
 	cmd.PersistentFlags().StringVar(
-		&so.OidcRedirectURL, "oidc-redirect-url", bnd.DefaultSignerOptions.OidcRedirectURL, "Redirect URL for the OIDC interactive flow",
+		&so.OidcRedirectURL, "oidc-redirect-url", options.DefaultSigner.OidcRedirectURL, "Redirect URL for the OIDC interactive flow",
 	)
 
 	cmd.PersistentFlags().StringVar(
-		&so.OidcClientID, "oidc-client-id", bnd.DefaultSignerOptions.OidcClientID, "Client ID to to set in token audience",
+		&so.OidcClientID, "oidc-client-id", options.DefaultSigner.OidcClientID, "Client ID to to set in token audience",
 	)
 }

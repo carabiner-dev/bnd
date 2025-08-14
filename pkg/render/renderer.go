@@ -8,8 +8,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	ampelb "github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"
 )
@@ -52,15 +53,17 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 		if verifyErr != nil {
 			idstr = fmt.Sprintf("[error: %s]\n", verifyErr)
 		}
-		if att.GetVerification() != nil {
+		if v := att.GetVerification(); v != nil {
 			idstr = "[No identity found]\n"
-			if att.GetVerification().GetSignature().GetIdentities() != nil {
-				idstr = ""
-				for i, id := range att.GetVerification().GetSignature().GetIdentities() {
-					if i > 0 {
-						idstr += strings.Repeat(" ", 19)
+			if sigv, ok := v.(*papi.Verification); ok {
+				if sigv.GetSignature().GetIdentities() != nil {
+					idstr = ""
+					for i, id := range sigv.GetSignature().GetIdentities() {
+						if i > 0 {
+							idstr += strings.Repeat(" ", 19)
+						}
+						idstr += id.Slug() + "\n"
 					}
-					idstr += id.Slug() + "\n"
 				}
 			}
 		}

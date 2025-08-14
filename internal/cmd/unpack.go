@@ -9,7 +9,7 @@ import (
 
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 )
 
 type unpackOptions struct {
@@ -24,12 +24,12 @@ func (o *unpackOptions) Validate() error {
 
 	if o.archivePath == "" {
 		errs = append(errs, errors.New("no jsonl bundle specified"))
-	} else if !util.Exists(o.archivePath) {
+	} else if !helpers.Exists(o.archivePath) {
 		errs = append(errs, errors.New("specified jsonl file not found"))
 	}
 
 	if o.outputDirectory != "" {
-		if !util.IsDir(o.outputDirectory) {
+		if !helpers.IsDir(o.outputDirectory) {
 			errs = append(errs, errors.New("output directory not found or is not a directory"))
 		}
 	}
