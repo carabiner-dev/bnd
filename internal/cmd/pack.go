@@ -11,7 +11,7 @@ import (
 
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 )
 
 type packOptions struct {
@@ -24,7 +24,7 @@ func (o *packOptions) Validate() error {
 	errs := []error{}
 
 	if o.OutPath != "" {
-		if util.Exists(o.OutPath) {
+		if helpers.Exists(o.OutPath) {
 			errs = append(errs, errors.New("specified output file already exists"))
 		}
 	}

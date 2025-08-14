@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 

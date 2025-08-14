@@ -9,8 +9,6 @@ import (
 	"net/url"
 
 	"github.com/spf13/cobra"
-
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 type sigstoreOptions struct {
@@ -20,7 +18,7 @@ type sigstoreOptions struct {
 
 func (so *sigstoreOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(
-		&so.TufRootURL, "trust-root", bnd.SigstorePublicGoodBaseURL,
+		&so.TufRootURL, "trust-root", "https://tuf-repo-cdn.sigstore.dev", // this should be a public constant
 		"Base URL to fetch the trusted TUF roots",
 	)
 

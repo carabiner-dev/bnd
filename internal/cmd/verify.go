@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/options"
 	"github.com/spf13/cobra"
-
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 type verifyOptions struct {
@@ -60,12 +60,8 @@ func addVerify(parentCmd *cobra.Command) {
 			// Silence usage here as options are validated
 			cmd.SilenceUsage = true
 
-			verifier := bnd.NewVerifier()
-			verifier.Options = bnd.VerificationOptions{
-				TufOptions: bnd.TufOptions{
-					TufRootURL:  opts.TufRootURL,
-					TufRootPath: opts.TufRootPath,
-				},
+			verifier := signer.NewVerifier()
+			verifier.Options = options.Verifier{
 				RequireCTlog:        opts.RequireCTlog,
 				RequireTimestamp:    opts.RequireTimestamp,
 				RequireTlog:         opts.RequireTlog,
@@ -75,6 +71,8 @@ func addVerify(parentCmd *cobra.Command) {
 				ExpectedSanRegex:    opts.ExpectedSanRegex,
 				SkipIdentityCheck:   opts.SkipIdentityCheck,
 			}
+			verifier.Options.TufRootURL = opts.TufRootURL
+			verifier.Options.TufRootPath = opts.TufRootPath
 			result, err := verifier.VerifyBundle(opts.Path)
 			if err != nil {
 				fmt.Println("\n❌ Bundle Verification Failed")

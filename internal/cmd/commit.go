@@ -12,13 +12,13 @@ import (
 	"path"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
+	"github.com/carabiner-dev/attestation"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 
 	"github.com/carabiner-dev/bnd/internal/git"
 )
@@ -149,7 +149,7 @@ Same, but cloning the repo from a local clone:
 			}
 
 			// Detect if the clone address is a local path or a remote URL
-			if util.Exists(opts.CloneAddress) {
+			if helpers.Exists(opts.CloneAddress) {
 				opts.repoPath = opts.CloneAddress
 			} else {
 				opts.repoURL = opts.CloneAddress
