@@ -12,9 +12,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
-	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/predicate"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

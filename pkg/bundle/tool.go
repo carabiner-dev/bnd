@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io"
 
-	ampelb "github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
-	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	"github.com/carabiner-dev/attestation"
+	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	protobundle "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"github.com/sirupsen/logrus"
 )
