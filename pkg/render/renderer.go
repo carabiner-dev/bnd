@@ -8,8 +8,8 @@ import (
 	"io"
 	"strings"
 
-	ampelb "github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
 	"github.com/carabiner-dev/attestation"
+	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
 	papi "github.com/carabiner-dev/policy/api/v1"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"

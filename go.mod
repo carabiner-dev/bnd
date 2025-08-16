@@ -3,15 +3,14 @@ module github.com/carabiner-dev/bnd
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/ampel v0.0.1-pre9.0.20250814141948-05a911e940ba
 	github.com/carabiner-dev/attestation v0.1.1
+	github.com/carabiner-dev/collector v0.1.2-0.20250816040159-9d460e4ef183
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/policy v0.0.0-20250812202510-fb6054f01ccd
-	github.com/carabiner-dev/signer v0.1.0
+	github.com/carabiner-dev/policy v0.0.0-20250813033747-0896a401d037
+	github.com/carabiner-dev/signer v0.1.1
 	github.com/go-git/go-git/v5 v5.16.2
-	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
 	github.com/sigstore/sigstore v1.9.5
@@ -46,9 +45,9 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/carabiner-dev/ghrfs v0.3.2 // indirect
-	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd // indirect
+	github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
-	github.com/carabiner-dev/vcslocator v0.3.1 // indirect
+	github.com/carabiner-dev/vcslocator v0.3.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
@@ -70,6 +69,7 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
