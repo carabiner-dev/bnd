@@ -9,14 +9,14 @@ require (
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.0.0-20250813033747-0896a401d037
-	github.com/carabiner-dev/signer v0.1.1
+	github.com/carabiner-dev/signer v0.1.2
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
 	github.com/sigstore/sigstore v1.9.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	sigs.k8s.io/release-sdk v0.12.4
 	sigs.k8s.io/release-utils v0.12.1
 )

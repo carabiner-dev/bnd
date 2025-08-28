@@ -739,8 +739,8 @@ github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
 github.com/carabiner-dev/policy v0.0.0-20250813033747-0896a401d037 h1:MlpfsWEjhFeVnI4jp5hDZTGhbE/ESWhRlR5yO5FO0K8=
 github.com/carabiner-dev/policy v0.0.0-20250813033747-0896a401d037/go.mod h1:FD4LUh9gywHXQHQ7sR3zYkAzHTsFh4kwOod06KJQ1sg=
-github.com/carabiner-dev/signer v0.1.1 h1:8+hZOnUAtAzd/OWhi8NVhD4Auz3hLUhIq1rFyk68n9o=
-github.com/carabiner-dev/signer v0.1.1/go.mod h1:cyXsI2efKEzfg66AF5Z3s2QQeksoYQwl2ywjiSVZmYA=
+github.com/carabiner-dev/signer v0.1.2 h1:R0MT947V75vw8sYUrqxzGeXA3wBcDoxkOiEPYWrO0rg=
+github.com/carabiner-dev/signer v0.1.2/go.mod h1:P9jv4aV3QoukE/304ZmhK1mI7B5aZxjgUMuy/fjsjdQ=
 github.com/carabiner-dev/vcslocator v0.3.2 h1:/rfhELG1mvqFq0xi8LQSkfpAVoQDCGlWoL6J5tX9Inw=
 github.com/carabiner-dev/vcslocator v0.3.2/go.mod h1:jvYlXLVyqQqkBuSH/CiE1pbHifoPaAhWtUjLquHaBb0=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
@@ -1301,8 +1301,8 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/stretchr/testify v1.11.0 h1:ib4sjIrwZKxE5u/Japgo/7SJV3PvgjGiRNAvTVGqQl8=
-github.com/stretchr/testify v1.11.0/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/terminalstatic/go-xsd-validate v0.1.6 h1:TenYeQ3eY631qNi1/cTmLH/s2slHPRKTTHT+XSHkepo=
