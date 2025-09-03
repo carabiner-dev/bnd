@@ -4,19 +4,20 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 
-	"github.com/carabiner-dev/bnd/pkg/reader"
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
 
 type readOptions struct {
 	sigstoreOptions
-	BackendUri       string
+	collectorOptions
 	VerifySignatures bool
 	DumpRaw          bool
 }
@@ -26,11 +27,9 @@ func (ro *readOptions) Validate() error {
 	errs := []error{}
 	errs = append(errs,
 		ro.sigstoreOptions.Validate(),
+		ro.collectorOptions.Validate(),
 	)
 
-	if ro.BackendUri == "" {
-		errs = append(errs, errors.New("missing source repository URI"))
-	}
 	return errors.Join(errs...)
 }
 
@@ -38,12 +37,8 @@ func (ro *readOptions) Validate() error {
 func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.sigstoreOptions.AddFlags(cmd)
 
-	cmd.PersistentFlags().StringVar(
-		&ro.BackendUri, "uri", "", "source repository URI to read attestations",
-	)
-
 	cmd.PersistentFlags().BoolVarP(
-		&ro.VerifySignatures, "verify", "v", true, "verify the attestation signatures",
+		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
 	)
 	cmd.PersistentFlags().BoolVar(
 		&ro.DumpRaw, "raw", false, "dump the attestations in raw JSON",
@@ -91,27 +86,45 @@ Read attestations from a directory:
 		SilenceErrors:     true,
 		PersistentPreRunE: initLogging,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				opts.BackendUri = args[0]
+			for _, arg := range args {
+				if !slices.Contains(opts.collectors, arg) {
+					opts.collectors = append(opts.collectors, arg)
+				}
 			}
 			return nil
 		},
-		RunE: func(_ *cobra.Command, args []string) error {
-			client := reader.New()
-			atts, err := client.Fetch(opts.BackendUri)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// If there are no collectors, don't err. Just return the help screen
+			if len(opts.collectors) == 0 {
+				return cmd.Help()
+			}
+			if err := opts.Validate(); err != nil {
+				return fmt.Errorf("validatging options: %w", err)
+			}
+			agent, err := opts.GetAgent()
 			if err != nil {
-				return err
+				return fmt.Errorf("creating collector agent: %w", err)
+			}
+
+			atts, err := agent.Fetch(context.Background())
+			if err != nil {
+				return fmt.Errorf("fetching attestations: %w", err)
 			}
 
 			renderer, err := render.New(render.WithVerifySignatures(opts.VerifySignatures))
 			if err != nil {
 				return err
 			}
-			for _, a := range atts {
+
+			fmt.Println("\n🔎  Query Results:")
+			fmt.Println("-----------------")
+			for i, a := range atts {
 				if opts.DumpRaw {
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
 				}
+
+				fmt.Printf("\nAttestation #%d\n", i)
 				if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
 					return fmt.Errorf("rendering attestation: %w", err)
 				}
