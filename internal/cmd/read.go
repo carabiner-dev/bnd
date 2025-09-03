@@ -4,13 +4,19 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 
+	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
@@ -19,7 +25,9 @@ type readOptions struct {
 	sigstoreOptions
 	collectorOptions
 	VerifySignatures bool
-	DumpRaw          bool
+	predicates       bool
+	statements       bool
+	jsonl            bool
 }
 
 // Validate checks the options
@@ -29,6 +37,10 @@ func (ro *readOptions) Validate() error {
 		ro.sigstoreOptions.Validate(),
 		ro.collectorOptions.Validate(),
 	)
+
+	if ro.predicates && ro.statements {
+		errs = append(errs, errors.New("only --statements or --predicates can be set at a time"))
+	}
 
 	return errors.Join(errs...)
 }
@@ -41,7 +53,13 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
 	)
 	cmd.PersistentFlags().BoolVar(
-		&ro.DumpRaw, "raw", false, "dump the attestations in raw JSON",
+		&ro.statements, "statements", false, "dump the bare statements (discard any envelopes)",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&ro.predicates, "predicates", false, "dump only the attestation predicates",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&ro.jsonl, "jsonl", false, "dump all read attestations in a JSONL bundle",
 	)
 }
 
@@ -111,22 +129,44 @@ Read attestations from a directory:
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
 
+			o := os.Stdout
+
 			renderer, err := render.New(render.WithVerifySignatures(opts.VerifySignatures))
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("\n🔎  Query Results:")
-			fmt.Println("-----------------")
+			if !opts.jsonl {
+				fmt.Println("\n🔎  Query Results:")
+				fmt.Println("-----------------")
+			}
+
 			for i, a := range atts {
-				if opts.DumpRaw {
+				switch {
+				case opts.predicates && !opts.jsonl:
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
-				}
-
-				fmt.Printf("\nAttestation #%d\n", i)
-				if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
-					return fmt.Errorf("rendering attestation: %w", err)
+				case opts.jsonl && !opts.predicates && !opts.statements:
+					if err := marshalToJsonl(o, a); err != nil {
+						return fmt.Errorf("flattening envelope: %w", err)
+					}
+				case opts.jsonl && opts.statements:
+					if err := marshalToJsonl(o, a.GetStatement()); err != nil {
+						return fmt.Errorf("flattening envelope: %w", err)
+					}
+				case opts.jsonl && opts.predicates:
+					// Writte the flattened data to the writer
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(a.GetPredicate().GetData()))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
+					}
+				default:
+					fmt.Printf("\nAttestation #%d\n", i)
+					if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
+						return fmt.Errorf("rendering attestation: %w", err)
+					}
 				}
 			}
 			return nil
@@ -134,4 +174,28 @@ Read attestations from a directory:
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
+}
+
+func marshalToJsonl(w io.Writer, e any) error {
+	var data []byte
+	var err error
+	if msg, ok := e.(proto.Message); ok {
+		data, err = protojson.MarshalOptions{
+			Multiline: false,
+		}.Marshal(msg)
+	} else {
+		data, err = json.Marshal(e)
+	}
+	if err != nil {
+		return fmt.Errorf("error marshaling envelope data: %w", err)
+	}
+
+	// Writte the flattened data to the writer
+	if _, err := io.Copy(w, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+		return fmt.Errorf("flattening json data: %w", err)
+	}
+	if _, err := io.WriteString(w, "\n"); err != nil {
+		return err
+	}
+	return nil
 }
