@@ -4,21 +4,32 @@
 package cmd
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"slices"
 
+	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/carabiner-dev/bnd/pkg/reader"
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
 
 type readOptions struct {
 	sigstoreOptions
-	BackendUri       string
+	collectorOptions
+	outFileOptions
 	VerifySignatures bool
-	DumpRaw          bool
+	predicates       bool
+	statements       bool
+	jsonl            bool
 }
 
 // Validate checks the options
@@ -26,27 +37,34 @@ func (ro *readOptions) Validate() error {
 	errs := []error{}
 	errs = append(errs,
 		ro.sigstoreOptions.Validate(),
+		ro.collectorOptions.Validate(),
+		ro.outFileOptions.Validate(),
 	)
 
-	if ro.BackendUri == "" {
-		errs = append(errs, errors.New("missing source repository URI"))
+	if ro.predicates && ro.statements {
+		errs = append(errs, errors.New("only --statements or --predicates can be set at a time"))
 	}
+
 	return errors.Join(errs...)
 }
 
 // AddFlags adds the subcommands flags
 func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.sigstoreOptions.AddFlags(cmd)
-
-	cmd.PersistentFlags().StringVar(
-		&ro.BackendUri, "uri", "", "source repository URI to read attestations",
-	)
+	ro.collectorOptions.AddFlags(cmd)
+	ro.outFileOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
-		&ro.VerifySignatures, "verify", "v", true, "verify the attestation signatures",
+		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
 	)
 	cmd.PersistentFlags().BoolVar(
-		&ro.DumpRaw, "raw", false, "dump the attestations in raw JSON",
+		&ro.statements, "statements", false, "dump the bare statements (discard any envelopes)",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&ro.predicates, "predicates", false, "dump only the attestation predicates",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&ro.jsonl, "jsonl", false, "dump all read attestations in a JSONL bundle",
 	)
 }
 
@@ -91,29 +109,85 @@ Read attestations from a directory:
 		SilenceErrors:     true,
 		PersistentPreRunE: initLogging,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				opts.BackendUri = args[0]
+			for _, arg := range args {
+				if !slices.Contains(opts.collectors, arg) {
+					opts.collectors = append(opts.collectors, arg)
+				}
 			}
 			return nil
 		},
-		RunE: func(_ *cobra.Command, args []string) error {
-			client := reader.New()
-			atts, err := client.Fetch(opts.BackendUri)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// If there are no collectors, don't err. Just return the help screen
+			if len(opts.collectors) == 0 {
+				return cmd.Help()
+			}
+			if err := opts.Validate(); err != nil {
+				return fmt.Errorf("validatging options: %w", err)
+			}
+			agent, err := opts.GetAgent()
 			if err != nil {
-				return err
+				return fmt.Errorf("creating collector agent: %w", err)
+			}
+
+			atts, err := agent.Fetch(context.Background())
+			if err != nil {
+				return fmt.Errorf("fetching attestations: %w", err)
+			}
+
+			var o io.Writer
+			o = os.Stdout
+			if opts.jsonl && opts.OutPath != "" {
+				var closer func()
+				o, closer, err = opts.OutputWriter()
+				if err != nil {
+					return fmt.Errorf("opening output file: %w", err)
+				}
+				defer closer()
 			}
 
 			renderer, err := render.New(render.WithVerifySignatures(opts.VerifySignatures))
 			if err != nil {
 				return err
 			}
-			for _, a := range atts {
-				if opts.DumpRaw {
+
+			if !opts.jsonl {
+				fmt.Println("\n🔎  Query Results:")
+				fmt.Println("-----------------")
+			}
+
+			for i, a := range atts {
+				switch {
+				case opts.predicates && !opts.jsonl:
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
-				}
-				if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
-					return fmt.Errorf("rendering attestation: %w", err)
+				case opts.jsonl && !opts.predicates && !opts.statements:
+					if err := marshalEnvelopeToJsonl(o, a); err != nil {
+						return fmt.Errorf("flattening envelope: %w", err)
+					}
+				case opts.jsonl && opts.statements:
+					data, err := json.Marshal(a.GetStatement())
+					if err != nil {
+						return err
+					}
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
+					}
+				case opts.jsonl && opts.predicates:
+					// Writte the flattened data to the writer
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(a.GetPredicate().GetData()))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
+					}
+				default:
+					fmt.Printf("\nAttestation #%d\n", i)
+					if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
+						return fmt.Errorf("rendering attestation: %w", err)
+					}
 				}
 			}
 			return nil
@@ -121,4 +195,31 @@ Read attestations from a directory:
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
+}
+
+// TODO(puerco): Once https://github.com/carabiner-dev/collector/issues/5
+// is fixed, change this to use just json.Marshal
+func marshalEnvelopeToJsonl(w io.Writer, e attestation.Envelope) error {
+	var data []byte
+	var err error
+	// TODO(puerco): Check if it implements unmaarshaler
+	if msg, ok := e.(proto.Message); ok {
+		data, err = protojson.MarshalOptions{
+			Multiline: false,
+		}.Marshal(msg)
+	} else {
+		data, err = json.Marshal(e)
+	}
+	if err != nil {
+		return fmt.Errorf("error marshaling envelope data: %w", err)
+	}
+
+	// Writte the flattened data to the writer
+	if _, err := io.Copy(w, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+		return fmt.Errorf("flattening json data: %w", err)
+	}
+	if _, err := io.WriteString(w, "\n"); err != nil {
+		return err
+	}
+	return nil
 }
