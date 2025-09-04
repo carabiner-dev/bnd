@@ -18,8 +18,6 @@ import (
 	"github.com/carabiner-dev/collector/filters"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
@@ -214,8 +212,16 @@ SBOMs:
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
 				case opts.jsonl && !opts.predicates && !opts.statements:
-					if err := marshalEnvelopeToJsonl(o, a); err != nil {
-						return fmt.Errorf("flattening envelope: %w", err)
+					data, err := json.Marshal(a)
+					if err != nil {
+						return fmt.Errorf("marshaling envelope: %w", err)
+					}
+					// Writte the flattened data to the writer
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
 					}
 				case opts.jsonl && opts.statements:
 					data, err := json.Marshal(a.GetStatement())
@@ -248,31 +254,4 @@ SBOMs:
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
-}
-
-// TODO(puerco): Once https://github.com/carabiner-dev/collector/issues/5
-// is fixed, change this to use just json.Marshal
-func marshalEnvelopeToJsonl(w io.Writer, e attestation.Envelope) error {
-	var data []byte
-	var err error
-	// TODO(puerco): Check if it implements unmaarshaler
-	if msg, ok := e.(proto.Message); ok {
-		data, err = protojson.MarshalOptions{
-			Multiline: false,
-		}.Marshal(msg)
-	} else {
-		data, err = json.Marshal(e)
-	}
-	if err != nil {
-		return fmt.Errorf("error marshaling envelope data: %w", err)
-	}
-
-	// Writte the flattened data to the writer
-	if _, err := io.Copy(w, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
-		return fmt.Errorf("flattening json data: %w", err)
-	}
-	if _, err := io.WriteString(w, "\n"); err != nil {
-		return err
-	}
-	return nil
 }

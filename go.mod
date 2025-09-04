@@ -17,7 +17,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.11.1
-	google.golang.org/protobuf v1.36.8
 	sigs.k8s.io/release-sdk v0.12.4
 	sigs.k8s.io/release-utils v0.12.1
 )
@@ -180,6 +179,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
+	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
