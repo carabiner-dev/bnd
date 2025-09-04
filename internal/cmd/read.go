@@ -14,10 +14,10 @@ import (
 	"slices"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/collector/filters"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
@@ -26,10 +26,12 @@ type readOptions struct {
 	sigstoreOptions
 	collectorOptions
 	outFileOptions
+	subjectsOptions
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
 	jsonl            bool
+	predicateTypes   []string
 }
 
 // Validate checks the options
@@ -53,6 +55,7 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.sigstoreOptions.AddFlags(cmd)
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
+	ro.subjectsOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -65,6 +68,10 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	)
 	cmd.PersistentFlags().BoolVar(
 		&ro.jsonl, "jsonl", false, "dump all read attestations in a JSONL bundle",
+	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&ro.predicateTypes, "type", []string{}, "list of predicate types to match",
 	)
 }
 
@@ -93,18 +100,23 @@ Read from a GitHub release:
 
 > bnd read release:github.com/example/repo@v1.0.1
 
-Read from the GitHub attestations store:
+Read from the GitHub attestations store and output them as a jsonl file:
 
-> bnd read github:owner/repo
+> bnd read --jsonl --out=attestations.jsonl github:owner/repo
 
 Read attestations from a directory:
 
 > bnd read fs:/home/files/attestations/
 
+Read all SPDX attestations from a jsonl bundle, extraing the bare (unsigned)
+SBOMs:
+
+> bnd read --type="https://spdx.dev/Document" --predicates jsonl:attestations.jsonl
+
 
 `, appname),
-		Use:               "read",
-		Example:           fmt.Sprintf(`%s read source`, appname),
+		Use: "read [flags] repo:collector/spec1 [repo:collector/spec2...]",
+		// Example:           fmt.Sprintf(`%s read source`, appname),
 		SilenceUsage:      false,
 		SilenceErrors:     true,
 		PersistentPreRunE: initLogging,
@@ -129,7 +141,14 @@ Read attestations from a directory:
 				return fmt.Errorf("creating collector agent: %w", err)
 			}
 
-			atts, err := agent.Fetch(context.Background())
+			// Build the fetch options  from the specified options
+			funcs, err := buildFetchOptionFuncs(opts)
+			if err != nil {
+				return err
+			}
+
+			// Fetch the attestations
+			atts, err := agent.Fetch(context.Background(), funcs...)
 			if err != nil {
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
@@ -161,8 +180,16 @@ Read attestations from a directory:
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
 				case opts.jsonl && !opts.predicates && !opts.statements:
-					if err := marshalEnvelopeToJsonl(o, a); err != nil {
-						return fmt.Errorf("flattening envelope: %w", err)
+					data, err := json.Marshal(a)
+					if err != nil {
+						return fmt.Errorf("marshaling envelope: %w", err)
+					}
+					// Writte the flattened data to the writer
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
 					}
 				case opts.jsonl && opts.statements:
 					data, err := json.Marshal(a.GetStatement())
@@ -197,29 +224,44 @@ Read attestations from a directory:
 	parentCmd.AddCommand(readCmd)
 }
 
-// TODO(puerco): Once https://github.com/carabiner-dev/collector/issues/5
-// is fixed, change this to use just json.Marshal
-func marshalEnvelopeToJsonl(w io.Writer, e attestation.Envelope) error {
-	var data []byte
-	var err error
-	// TODO(puerco): Check if it implements unmaarshaler
-	if msg, ok := e.(proto.Message); ok {
-		data, err = protojson.MarshalOptions{
-			Multiline: false,
-		}.Marshal(msg)
-	} else {
-		data, err = json.Marshal(e)
-	}
-	if err != nil {
-		return fmt.Errorf("error marshaling envelope data: %w", err)
+func buildFetchOptionFuncs(opts *readOptions) ([]collector.FetchOptionsFunc, error) {
+	funcs := []collector.FetchOptionsFunc{}
+	enabledFilters := []attestation.Filter{}
+
+	// If predicate types are defined, add a filter
+	if len(opts.predicateTypes) > 0 {
+		ptMap := map[attestation.PredicateType]struct{}{}
+		for _, pt := range opts.predicateTypes {
+			ptMap[attestation.PredicateType(pt)] = struct{}{}
+		}
+		enabledFilters = append(enabledFilters, &filters.PredicateTypeMatcher{
+			PredicateTypes: ptMap,
+		})
 	}
 
-	// Writte the flattened data to the writer
-	if _, err := io.Copy(w, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
-		return fmt.Errorf("flattening json data: %w", err)
+	// If there are any subject hashses defined, add filters for them
+	if len(opts.subjects) > 0 {
+		hs, err := opts.getHashSet()
+		if err != nil {
+			return nil, fmt.Errorf("reading subject hashes: %w", err)
+		}
+		hashList := []map[string]string{}
+
+		for _, b := range hs {
+			m := map[string]string{}
+			for algo, val := range b {
+				m[algo.String()] = val
+			}
+			hashList = append(hashList, m)
+		}
+		enabledFilters = append(enabledFilters, &filters.SubjectHashMatcher{
+			HashSets: hashList,
+		})
 	}
-	if _, err := io.WriteString(w, "\n"); err != nil {
-		return err
+
+	if len(enabledFilters) > 0 {
+		q := attestation.NewQuery()
+		funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
 	}
-	return nil
+	return funcs, nil
 }
