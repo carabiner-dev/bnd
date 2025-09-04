@@ -71,6 +71,10 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&ro.jsonl, "jsonl", false, "dump all read attestations in a JSONL bundle",
 	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&ro.predicateTypes, "type", []string{}, "list of predicate types to match",
+	)
 }
 
 func addRead(parentCmd *cobra.Command) {
