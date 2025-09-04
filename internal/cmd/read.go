@@ -102,18 +102,23 @@ Read from a GitHub release:
 
 > bnd read release:github.com/example/repo@v1.0.1
 
-Read from the GitHub attestations store:
+Read from the GitHub attestations store and output them as a jsonl file:
 
-> bnd read github:owner/repo
+> bnd read --jsonl --out=attestations.jsonl github:owner/repo
 
 Read attestations from a directory:
 
 > bnd read fs:/home/files/attestations/
 
+Read all SPDX attestations from a jsonl bundle, extraing the bare (unsigned)
+SBOMs:
+
+> bnd read --type="https://spdx.dev/Document" --predicates jsonl:attestations.jsonl
+
 
 `, appname),
-		Use:               "read",
-		Example:           fmt.Sprintf(`%s read source`, appname),
+		Use: "read [flags] repo:collector/spec1 [repo:collector/spec2...]",
+		// Example:           fmt.Sprintf(`%s read source`, appname),
 		SilenceUsage:      false,
 		SilenceErrors:     true,
 		PersistentPreRunE: initLogging,
