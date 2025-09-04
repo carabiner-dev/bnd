@@ -141,45 +141,13 @@ SBOMs:
 				return fmt.Errorf("creating collector agent: %w", err)
 			}
 
-			funcs := []collector.FetchOptionsFunc{}
-			enabledFilters := []attestation.Filter{}
-
-			// If predicate types are defined, add a filter
-			if len(opts.predicateTypes) > 0 {
-				ptMap := map[attestation.PredicateType]struct{}{}
-				for _, pt := range opts.predicateTypes {
-					ptMap[attestation.PredicateType(pt)] = struct{}{}
-				}
-				enabledFilters = append(enabledFilters, &filters.PredicateTypeMatcher{
-					PredicateTypes: ptMap,
-				})
+			// Build the fetch options  from the specified options
+			funcs, err := buildFetchOptionFuncs(opts)
+			if err != nil {
+				return err
 			}
 
-			// If there are any subject hashses defined, add filters for them
-			if len(opts.subjects) > 0 {
-				hs, err := opts.getHashSet()
-				if err != nil {
-					return fmt.Errorf("reading subject hashes: %w", err)
-				}
-				hashList := []map[string]string{}
-
-				for _, b := range hs {
-					m := map[string]string{}
-					for algo, val := range b {
-						m[algo.String()] = val
-					}
-					hashList = append(hashList, m)
-				}
-				enabledFilters = append(enabledFilters, &filters.SubjectHashMatcher{
-					HashSets: hashList,
-				})
-			}
-
-			if len(enabledFilters) > 0 {
-				q := attestation.NewQuery()
-				funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
-			}
-
+			// Fetch the attestations
 			atts, err := agent.Fetch(context.Background(), funcs...)
 			if err != nil {
 				return fmt.Errorf("fetching attestations: %w", err)
@@ -254,4 +222,46 @@ SBOMs:
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
+}
+
+func buildFetchOptionFuncs(opts *readOptions) ([]collector.FetchOptionsFunc, error) {
+	funcs := []collector.FetchOptionsFunc{}
+	enabledFilters := []attestation.Filter{}
+
+	// If predicate types are defined, add a filter
+	if len(opts.predicateTypes) > 0 {
+		ptMap := map[attestation.PredicateType]struct{}{}
+		for _, pt := range opts.predicateTypes {
+			ptMap[attestation.PredicateType(pt)] = struct{}{}
+		}
+		enabledFilters = append(enabledFilters, &filters.PredicateTypeMatcher{
+			PredicateTypes: ptMap,
+		})
+	}
+
+	// If there are any subject hashses defined, add filters for them
+	if len(opts.subjects) > 0 {
+		hs, err := opts.getHashSet()
+		if err != nil {
+			return nil, fmt.Errorf("reading subject hashes: %w", err)
+		}
+		hashList := []map[string]string{}
+
+		for _, b := range hs {
+			m := map[string]string{}
+			for algo, val := range b {
+				m[algo.String()] = val
+			}
+			hashList = append(hashList, m)
+		}
+		enabledFilters = append(enabledFilters, &filters.SubjectHashMatcher{
+			HashSets: hashList,
+		})
+	}
+
+	if len(enabledFilters) > 0 {
+		q := attestation.NewQuery()
+		funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
+	}
+	return funcs, nil
 }
