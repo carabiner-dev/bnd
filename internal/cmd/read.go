@@ -13,6 +13,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -24,6 +25,7 @@ import (
 type readOptions struct {
 	sigstoreOptions
 	collectorOptions
+	outFileOptions
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
@@ -36,6 +38,7 @@ func (ro *readOptions) Validate() error {
 	errs = append(errs,
 		ro.sigstoreOptions.Validate(),
 		ro.collectorOptions.Validate(),
+		ro.outFileOptions.Validate(),
 	)
 
 	if ro.predicates && ro.statements {
@@ -48,6 +51,8 @@ func (ro *readOptions) Validate() error {
 // AddFlags adds the subcommands flags
 func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.sigstoreOptions.AddFlags(cmd)
+	ro.collectorOptions.AddFlags(cmd)
+	ro.outFileOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -129,7 +134,16 @@ Read attestations from a directory:
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
 
-			o := os.Stdout
+			var o io.Writer
+			o = os.Stdout
+			if opts.jsonl && opts.OutPath != "" {
+				var closer func()
+				o, closer, err = opts.OutputWriter()
+				if err != nil {
+					return fmt.Errorf("opening output file: %w", err)
+				}
+				defer closer()
+			}
 
 			renderer, err := render.New(render.WithVerifySignatures(opts.VerifySignatures))
 			if err != nil {
@@ -147,12 +161,19 @@ Read attestations from a directory:
 					fmt.Println(string(a.GetPredicate().GetData()))
 					continue
 				case opts.jsonl && !opts.predicates && !opts.statements:
-					if err := marshalToJsonl(o, a); err != nil {
+					if err := marshalEnvelopeToJsonl(o, a); err != nil {
 						return fmt.Errorf("flattening envelope: %w", err)
 					}
 				case opts.jsonl && opts.statements:
-					if err := marshalToJsonl(o, a.GetStatement()); err != nil {
-						return fmt.Errorf("flattening envelope: %w", err)
+					data, err := json.Marshal(a.GetStatement())
+					if err != nil {
+						return err
+					}
+					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+						return fmt.Errorf("flattening json data: %w", err)
+					}
+					if _, err := io.WriteString(o, "\n"); err != nil {
+						return err
 					}
 				case opts.jsonl && opts.predicates:
 					// Writte the flattened data to the writer
@@ -176,9 +197,12 @@ Read attestations from a directory:
 	parentCmd.AddCommand(readCmd)
 }
 
-func marshalToJsonl(w io.Writer, e any) error {
+// TODO(puerco): Once https://github.com/carabiner-dev/collector/issues/5
+// is fixed, change this to use just json.Marshal
+func marshalEnvelopeToJsonl(w io.Writer, e attestation.Envelope) error {
 	var data []byte
 	var err error
+	// TODO(puerco): Check if it implements unmaarshaler
 	if msg, ok := e.(proto.Message); ok {
 		data, err = protojson.MarshalOptions{
 			Multiline: false,
