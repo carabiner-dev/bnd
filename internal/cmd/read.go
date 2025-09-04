@@ -14,6 +14,8 @@ import (
 	"slices"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/collector/filters"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -30,6 +32,7 @@ type readOptions struct {
 	predicates       bool
 	statements       bool
 	jsonl            bool
+	predicateTypes   []string
 }
 
 // Validate checks the options
@@ -129,7 +132,26 @@ Read attestations from a directory:
 				return fmt.Errorf("creating collector agent: %w", err)
 			}
 
-			atts, err := agent.Fetch(context.Background())
+			funcs := []collector.FetchOptionsFunc{}
+			enabledFilters := []attestation.Filter{}
+			q := attestation.NewQuery()
+
+			// If predicate types are defined, add a filter
+			if len(opts.predicateTypes) > 0 {
+				ptMap := map[attestation.PredicateType]struct{}{}
+				for _, pt := range opts.predicateTypes {
+					ptMap[attestation.PredicateType(pt)] = struct{}{}
+				}
+				enabledFilters = append(enabledFilters, &filters.PredicateTypeMatcher{
+					PredicateTypes: ptMap,
+				})
+			}
+
+			if len(enabledFilters) > 0 {
+				funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
+			}
+
+			atts, err := agent.Fetch(context.Background(), funcs...)
 			if err != nil {
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
