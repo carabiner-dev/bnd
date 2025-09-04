@@ -10,11 +10,24 @@ import (
 
 	"github.com/carabiner-dev/hasher"
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
 )
 
 type subjectsOptions struct {
 	subjects []string
+}
+
+func (so *subjectsOptions) Validate() error {
+	// TODO(puerco): Check if entries are valid (although happens later)
+	return nil
+}
+
+// AddFlags adds the flags to a cobra command
+func (so *subjectsOptions) AddFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringSliceVarP(
+		&so.subjects, "subject", "s", []string{}, "List of files or hashes to add as subjects",
+	)
 }
 
 // getHashSet returns the hashsets

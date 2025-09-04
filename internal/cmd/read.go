@@ -28,6 +28,7 @@ type readOptions struct {
 	sigstoreOptions
 	collectorOptions
 	outFileOptions
+	subjectsOptions
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
@@ -56,6 +57,7 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.sigstoreOptions.AddFlags(cmd)
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
+	ro.subjectsOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -134,7 +136,6 @@ Read attestations from a directory:
 
 			funcs := []collector.FetchOptionsFunc{}
 			enabledFilters := []attestation.Filter{}
-			q := attestation.NewQuery()
 
 			// If predicate types are defined, add a filter
 			if len(opts.predicateTypes) > 0 {
@@ -147,7 +148,28 @@ Read attestations from a directory:
 				})
 			}
 
+			// If there are any subject hashses defined, add filters for them
+			if len(opts.subjects) > 0 {
+				hs, err := opts.getHashSet()
+				if err != nil {
+					return fmt.Errorf("reading subject hashes: %w", err)
+				}
+				hashList := []map[string]string{}
+
+				for _, b := range hs {
+					m := map[string]string{}
+					for algo, val := range b {
+						m[algo.String()] = val
+					}
+					hashList = append(hashList, m)
+				}
+				enabledFilters = append(enabledFilters, &filters.SubjectHashMatcher{
+					HashSets: hashList,
+				})
+			}
+
 			if len(enabledFilters) > 0 {
+				q := attestation.NewQuery()
 				funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
 			}
 
