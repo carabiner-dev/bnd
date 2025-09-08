@@ -3,8 +3,8 @@ module github.com/carabiner-dev/bnd
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.1.1
-	github.com/carabiner-dev/collector v0.1.2
+	github.com/carabiner-dev/attestation v0.1.2
+	github.com/carabiner-dev/collector v0.1.3
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
@@ -114,8 +114,8 @@ require (
 	github.com/olekukonko/tablewriter v1.0.9 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/openvex/go-vex v0.2.5 // indirect
-	github.com/package-url/packageurl-go v0.1.1 // indirect
+	github.com/openvex/go-vex v0.2.6 // indirect
+	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
