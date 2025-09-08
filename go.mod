@@ -3,7 +3,7 @@ module github.com/carabiner-dev/bnd
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.1.1
+	github.com/carabiner-dev/attestation v0.1.2
 	github.com/carabiner-dev/collector v0.1.2
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
