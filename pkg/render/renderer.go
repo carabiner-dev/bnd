@@ -49,7 +49,7 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 	idstr := "[✗ not signed]\n"
 
 	if r.Options.VerifySignatures {
-		verifyErr := envelope.Verify()
+		verifyErr := envelope.Verify(r.Options.PublicKeys)
 		if verifyErr != nil {
 			idstr = fmt.Sprintf("[error: %s]\n", verifyErr)
 		}

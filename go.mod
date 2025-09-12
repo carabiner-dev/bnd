@@ -3,13 +3,14 @@ module github.com/carabiner-dev/bnd
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.1.2
-	github.com/carabiner-dev/collector v0.1.3
+	github.com/carabiner-dev/attestation v0.2.0
+	github.com/carabiner-dev/collector v0.2.0
+	github.com/carabiner-dev/command v0.1.1
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.1.0
-	github.com/carabiner-dev/signer v0.1.2
+	github.com/carabiner-dev/signer v0.2.1
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
@@ -170,8 +171,8 @@ require (
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/api v0.242.0 // indirect

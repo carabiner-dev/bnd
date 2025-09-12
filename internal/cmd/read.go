@@ -16,6 +16,7 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/filters"
+	"github.com/carabiner-dev/command"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 
@@ -27,6 +28,7 @@ type readOptions struct {
 	collectorOptions
 	outFileOptions
 	subjectsOptions
+	command.KeyOptions
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
@@ -41,6 +43,7 @@ func (ro *readOptions) Validate() error {
 		ro.sigstoreOptions.Validate(),
 		ro.collectorOptions.Validate(),
 		ro.outFileOptions.Validate(),
+		ro.KeyOptions.Validate(),
 	)
 
 	if ro.predicates && ro.statements {
@@ -56,6 +59,7 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
 	ro.subjectsOptions.AddFlags(cmd)
+	ro.KeyOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -164,7 +168,16 @@ SBOMs:
 				defer closer()
 			}
 
-			renderer, err := render.New(render.WithVerifySignatures(opts.VerifySignatures))
+			// Parse any public keys passed in args
+			keys, err := opts.ParseKeys()
+			if err != nil {
+				return fmt.Errorf("parsing public keys: %w", err)
+			}
+
+			renderer, err := render.New(
+				render.WithVerifySignatures(opts.VerifySignatures),
+				render.WithPublicKey(keys...),
+			)
 			if err != nil {
 				return err
 			}
