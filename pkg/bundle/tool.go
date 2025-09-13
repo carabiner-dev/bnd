@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/carabiner-dev/attestation"
-	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
+	"github.com/carabiner-dev/collector/envelope"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	protobundle "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"github.com/sirupsen/logrus"
@@ -23,8 +23,7 @@ func NewTool() *Tool {
 
 // Parse reades the budle data from reader r and decodes it into
 func (t *Tool) ParseBundle(r io.Reader) (attestation.Envelope, error) {
-	p := ampelb.Parser{}
-	envelopeSet, err := p.ParseStream(r)
+	envelopeSet, err := envelope.Parsers.Parse(r)
 	if err != nil {
 		return nil, fmt.Errorf("parsing bundle: %w", err)
 	}
@@ -52,8 +51,8 @@ func getBundleContentIfDSSE(bundle *protobundle.Bundle) *protobundle.Bundle_Dsse
 
 // ExtractPredicateJSON is akin to ExtractPredicate but returns the predicated
 // marshalled as JSON
-func (t *Tool) ExtractPredicateJSON(envelope attestation.Envelope) ([]byte, error) {
-	statement := envelope.GetStatement()
+func (t *Tool) ExtractPredicateJSON(env attestation.Envelope) ([]byte, error) {
+	statement := env.GetStatement()
 	if statement == nil {
 		return nil, fmt.Errorf("no statement found in envelope")
 	}
