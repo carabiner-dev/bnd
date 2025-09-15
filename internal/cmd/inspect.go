@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/command"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 
@@ -19,18 +20,21 @@ import (
 )
 
 type inspectOptions struct {
+	command.KeyOptions
 	bundleOptions
 }
 
 // Validates the options in context with arguments
 func (o *inspectOptions) Validate() error {
 	return errors.Join(
+		o.KeyOptions.Validate(),
 		o.bundleOptions.Validate(),
 	)
 }
 
 func (o *inspectOptions) AddFlags(cmd *cobra.Command) {
 	o.bundleOptions.AddFlags(cmd)
+	o.KeyOptions.AddFlags(cmd)
 }
 
 func addInspect(parentCmd *cobra.Command) {
@@ -71,10 +75,17 @@ data about the bundle.
 			}
 			defer closer()
 
+			keys, err := opts.ParseKeys()
+			if err != nil {
+				return err
+			}
+
 			fmt.Println("\n🔎  Bundle Details:")
 			fmt.Println("-------------------")
 
-			renderer, err := render.New()
+			renderer, err := render.New(
+				render.WithPublicKey(keys...),
+			)
 			if err != nil {
 				return err
 			}

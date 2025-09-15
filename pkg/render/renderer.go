@@ -51,20 +51,24 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 	if r.Options.VerifySignatures {
 		verifyErr := envelope.Verify(r.Options.PublicKeys)
 		if verifyErr != nil {
-			idstr = fmt.Sprintf("[error: %s]\n", verifyErr)
+			idstr = fmt.Sprintf("[verification error: %s]\n", verifyErr)
 		}
 		if v := att.GetVerification(); v != nil {
 			idstr = "[No identity found]\n"
-			if sigv, ok := v.(*papi.Verification); ok {
-				if sigv.GetSignature().GetIdentities() != nil {
-					idstr = ""
-					for i, id := range sigv.GetSignature().GetIdentities() {
-						if i > 0 {
-							idstr += strings.Repeat(" ", 19)
+			if v.GetVerified() {
+				if sigv, ok := v.(*papi.Verification); ok {
+					if sigv.GetSignature().GetIdentities() != nil {
+						idstr = ""
+						for i, id := range sigv.GetSignature().GetIdentities() {
+							if i > 0 {
+								idstr += strings.Repeat(" ", 19)
+							}
+							idstr += id.Slug() + "\n"
 						}
-						idstr += id.Slug() + "\n"
 					}
 				}
+			} else {
+				idstr = "[✗ verification failed]\n"
 			}
 		}
 	} else {
