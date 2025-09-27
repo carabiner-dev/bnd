@@ -138,8 +138,9 @@ SBOMs:
 				return cmd.Help()
 			}
 			if err := opts.Validate(); err != nil {
-				return fmt.Errorf("validatging options: %w", err)
+				return fmt.Errorf("validating options: %w", err)
 			}
+
 			agent, err := opts.GetAgent()
 			if err != nil {
 				return fmt.Errorf("creating collector agent: %w", err)
@@ -157,84 +158,105 @@ SBOMs:
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
 
-			var o io.Writer
-			o = os.Stdout
-			if opts.jsonl && opts.OutPath != "" {
-				var closer func()
-				o, closer, err = opts.OutputWriter()
-				if err != nil {
-					return fmt.Errorf("opening output file: %w", err)
-				}
-				defer closer()
-			}
-
-			// Parse any public keys passed in args
-			keys, err := opts.ParseKeys()
-			if err != nil {
-				return fmt.Errorf("parsing public keys: %w", err)
-			}
-
-			renderer, err := render.New(
-				render.WithVerifySignatures(opts.VerifySignatures),
-				render.WithPublicKey(keys...),
-			)
+			o, closer, err := getOutputWriter(opts)
 			if err != nil {
 				return err
 			}
+			defer closer()
 
-			if !opts.jsonl {
+			if !opts.jsonl && !opts.statements && !opts.predicates {
 				fmt.Println("\n🔎  Query Results:")
 				fmt.Println("-----------------")
 			}
 
-			for i, a := range atts {
-				switch {
-				case opts.predicates && !opts.jsonl:
-					fmt.Println(string(a.GetPredicate().GetData()))
-					continue
-				case opts.jsonl && !opts.predicates && !opts.statements:
-					data, err := json.Marshal(a)
-					if err != nil {
-						return fmt.Errorf("marshaling envelope: %w", err)
-					}
-					// Writte the flattened data to the writer
-					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
-						return fmt.Errorf("flattening json data: %w", err)
-					}
-					if _, err := io.WriteString(o, "\n"); err != nil {
-						return err
-					}
-				case opts.jsonl && opts.statements:
-					data, err := json.Marshal(a.GetStatement())
-					if err != nil {
-						return err
-					}
-					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
-						return fmt.Errorf("flattening json data: %w", err)
-					}
-					if _, err := io.WriteString(o, "\n"); err != nil {
-						return err
-					}
-				case opts.jsonl && opts.predicates:
-					// Writte the flattened data to the writer
-					if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(a.GetPredicate().GetData()))); err != nil {
-						return fmt.Errorf("flattening json data: %w", err)
-					}
-					if _, err := io.WriteString(o, "\n"); err != nil {
-						return err
-					}
-				default:
-					fmt.Printf("\nAttestation #%d\n", i)
-					if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
-						return fmt.Errorf("rendering attestation: %w", err)
-					}
-				}
-			}
-			return nil
+			return renderAttestations(opts, atts, o)
 		},
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
+}
+
+func renderAttestations(opts *readOptions, atts []attestation.Envelope, o io.Writer) error {
+	// Parse any public keys passed in args
+	keys, err := opts.ParseKeys()
+	if err != nil {
+		return fmt.Errorf("parsing public keys: %w", err)
+	}
+
+	renderer, err := render.New(
+		render.WithVerifySignatures(opts.VerifySignatures),
+		render.WithPublicKey(keys...),
+	)
+	if err != nil {
+		return err
+	}
+	for i, a := range atts {
+		switch {
+		case opts.predicates && !opts.jsonl:
+			fmt.Println(string(a.GetPredicate().GetData()))
+			continue
+		case opts.jsonl && !opts.predicates && !opts.statements:
+			data, err := json.Marshal(a)
+			if err != nil {
+				return fmt.Errorf("marshaling envelope: %w", err)
+			}
+			// Writte the flattened data to the writer
+			if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+				return fmt.Errorf("flattening json data: %w", err)
+			}
+			if _, err := io.WriteString(o, "\n"); err != nil {
+				return err
+			}
+		case !opts.jsonl && opts.statements:
+			data, err := json.MarshalIndent(a.GetStatement(), "", "  ")
+			if err != nil {
+				return err
+			}
+			if _, err := o.Write(data); err != nil {
+				return fmt.Errorf("writing attestation to output: %w", err)
+			}
+			if _, err := io.WriteString(o, "\n"); err != nil {
+				return err
+			}
+		case opts.jsonl && opts.statements:
+			data, err := json.Marshal(a.GetStatement())
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(data))); err != nil {
+				return fmt.Errorf("flattening json data: %w", err)
+			}
+			if _, err := io.WriteString(o, "\n"); err != nil {
+				return err
+			}
+		case opts.jsonl && opts.predicates:
+			// Writte the flattened data to the writer
+			if _, err := io.Copy(o, jsonl.FlattenJSONStream(bytes.NewBuffer(a.GetPredicate().GetData()))); err != nil {
+				return fmt.Errorf("flattening json data: %w", err)
+			}
+			if _, err := io.WriteString(o, "\n"); err != nil {
+				return err
+			}
+		default:
+			fmt.Printf("\nAttestation #%d\n", i)
+			if err := renderer.DisplayEnvelopeDetails(os.Stdout, a); err != nil {
+				return fmt.Errorf("rendering attestation: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func getOutputWriter(opts *readOptions) (o io.Writer, closer func(), err error) {
+	o = os.Stdout
+	closer = func() {}
+	if opts.jsonl && opts.OutPath != "" {
+		o, closer, err = opts.OutputWriter()
+		if err != nil {
+			return nil, nil, fmt.Errorf("opening output file: %w", err)
+		}
+	}
+	return o, closer, nil
 }
 
 func buildFetchOptionFuncs(opts *readOptions) ([]collector.FetchOptionsFunc, error) {
