@@ -1,10 +1,10 @@
 module github.com/carabiner-dev/bnd
 
-go 1.24.6
+go 1.24.8
 
 require (
 	github.com/carabiner-dev/attestation v0.2.0
-	github.com/carabiner-dev/collector v0.2.3
+	github.com/carabiner-dev/collector v0.2.4
 	github.com/carabiner-dev/command v0.1.1
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
@@ -45,7 +45,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/carabiner-dev/ghrfs v0.3.3 // indirect
+	github.com/carabiner-dev/ghrfs v0.3.4 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
 	github.com/carabiner-dev/vcslocator v0.3.2 // indirect
