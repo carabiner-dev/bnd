@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/policy v0.2.1
+	github.com/carabiner-dev/policy v0.3.1
 	github.com/carabiner-dev/signer v0.2.1
 	github.com/go-git/go-git/v5 v5.16.3
 	github.com/in-toto/attestation v1.1.2
