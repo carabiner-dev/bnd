@@ -24,7 +24,6 @@ import (
 )
 
 type readOptions struct {
-	sigstoreOptions
 	collectorOptions
 	outFileOptions
 	subjectsOptions
@@ -40,7 +39,6 @@ type readOptions struct {
 func (ro *readOptions) Validate() error {
 	errs := []error{}
 	errs = append(errs,
-		ro.sigstoreOptions.Validate(),
 		ro.collectorOptions.Validate(),
 		ro.outFileOptions.Validate(),
 		ro.KeyOptions.Validate(),
@@ -55,7 +53,6 @@ func (ro *readOptions) Validate() error {
 
 // AddFlags adds the subcommands flags
 func (ro *readOptions) AddFlags(cmd *cobra.Command) {
-	ro.sigstoreOptions.AddFlags(cmd)
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
 	ro.subjectsOptions.AddFlags(cmd)
