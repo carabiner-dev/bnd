@@ -13,7 +13,6 @@ import (
 )
 
 type verifyOptions struct {
-	sigstoreOptions
 	verifcationOptions
 	bundleOptions
 }
@@ -21,7 +20,6 @@ type verifyOptions struct {
 // Validates the options in context with arguments
 func (o *verifyOptions) Validate() error {
 	return errors.Join(
-		o.sigstoreOptions.Validate(),
 		o.verifcationOptions.Validate(),
 		o.bundleOptions.Validate(),
 	)
@@ -31,7 +29,6 @@ func (o *verifyOptions) Validate() error {
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	o.verifcationOptions.AddFlags(cmd)
 	o.bundleOptions.AddFlags(cmd)
-	o.sigstoreOptions.AddFlags(cmd)
 }
 
 // addVerify adds the verification command
@@ -61,23 +58,20 @@ func addVerify(parentCmd *cobra.Command) {
 			cmd.SilenceUsage = true
 
 			verifier := signer.NewVerifier()
-			verifier.Options = options.Verifier{
-				RequireCTlog:        opts.RequireCTlog,
-				RequireTimestamp:    opts.RequireTimestamp,
-				RequireTlog:         opts.RequireTlog,
-				ExpectedIssuer:      opts.ExpectedIssuer,
-				ExpectedIssuerRegex: opts.ExpectedIssuerRegex,
-				ExpectedSan:         opts.ExpectedSan,
-				ExpectedSanRegex:    opts.ExpectedSanRegex,
-				SkipIdentityCheck:   opts.SkipIdentityCheck,
-			}
-			verifier.Options.TufRootURL = opts.TufRootURL
-			verifier.Options.TufRootPath = opts.TufRootPath
-			result, err := verifier.VerifyBundle(opts.Path)
-			if err != nil {
+
+			result, err := verifier.VerifyBundle(
+				opts.Path,
+				options.WithExpectedIdentity(opts.ExpectedIssuer, opts.ExpectedSan),
+				options.WithExpectedIdentityRegex(opts.ExpectedIssuerRegex, opts.ExpectedSanRegex),
+				options.WithSkipIdentityCheck(opts.SkipIdentityCheck),
+			)
+			if err != nil || result == nil {
 				fmt.Println("\n❌ Bundle Verification Failed")
 				fmt.Println("")
-				return fmt.Errorf("error verifying bundle: %w", err)
+				if err != nil {
+					return fmt.Errorf("error verifying bundle: %w", err)
+				}
+				return errors.New("bundle verify returned nil")
 			}
 
 			fmt.Printf("\n✅ Bundle Verification OK!\n")
@@ -87,6 +81,7 @@ func addVerify(parentCmd *cobra.Command) {
 				fmt.Printf("OIDC Issuer: %+s\n", result.VerifiedIdentity.Issuer.Issuer)
 			}
 			fmt.Println("")
+
 			return nil
 		},
 	}
