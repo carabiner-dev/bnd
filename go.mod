@@ -2,15 +2,16 @@ module github.com/carabiner-dev/bnd
 
 go 1.24.8
 
+replace github.com/carabiner-dev/signer => ../signer
+
 require (
 	github.com/carabiner-dev/attestation v0.2.0
-	github.com/carabiner-dev/collector v0.2.4
+	github.com/carabiner-dev/collector v0.2.5
 	github.com/carabiner-dev/command v0.1.1
-	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.3.1
-	github.com/carabiner-dev/signer v0.2.1
+	github.com/carabiner-dev/signer v0.3.1
 	github.com/go-git/go-git/v5 v5.16.3
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
@@ -46,6 +47,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/carabiner-dev/ghrfs v0.3.4 // indirect
+	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
 	github.com/carabiner-dev/vcslocator v0.3.2 // indirect
@@ -190,8 +192,8 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/api v0.248.0 // indirect
