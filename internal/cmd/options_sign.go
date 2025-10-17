@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const sigstoreFlagPrefix = "sigstore"
+
 type signOptions struct {
 	Sign bool
 }

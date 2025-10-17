@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/envelope"
 	"github.com/carabiner-dev/collector/repository/github"
+	"github.com/spf13/cobra"
 )
 
 type pushOptions struct {

@@ -9,10 +9,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/carabiner-dev/signer"
 	"github.com/carabiner-dev/signer/options"
+	"github.com/spf13/cobra"
 )
 
 type statementOptions struct {
@@ -27,7 +26,7 @@ func (so *statementOptions) Validate() error {
 	errs := append([]error{},
 		so.signOptions.Validate(),
 		so.outFileOptions.Validate(),
-		so.Sigstore.ValidateSigner(),
+		so.ValidateSigner(),
 	)
 
 	if so.StatementPath == "" {
@@ -37,8 +36,8 @@ func (so *statementOptions) Validate() error {
 }
 
 func (so *statementOptions) AddFlags(cmd *cobra.Command) {
-	so.Sigstore.FlagPrefix = "sigstore"
-	so.Sigstore.HideOIDCOptions = true
+	so.FlagPrefix = sigstoreFlagPrefix
+	so.HideOIDCOptions = true
 	so.Sigstore.AddFlags(cmd)
 
 	so.signOptions.AddFlags(cmd)

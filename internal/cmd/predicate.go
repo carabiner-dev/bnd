@@ -57,7 +57,7 @@ func (po *predicateOptions) Validate() error {
 	errs := append([]error{},
 		po.signOptions.Validate(),
 		po.predicateFileOptions.Validate(),
-		po.Sigstore.ValidateSigner(),
+		po.ValidateSigner(),
 		po.outFileOptions.Validate(),
 	)
 
@@ -78,8 +78,8 @@ func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 	po.predicateFileOptions.AddFlags(cmd)
 	po.outFileOptions.AddFlags(cmd)
 
-	po.Sigstore.FlagPrefix = "sigstore"
-	po.Sigstore.HideOIDCOptions = true
+	po.FlagPrefix = sigstoreFlagPrefix
+	po.HideOIDCOptions = true
 	po.Sigstore.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(

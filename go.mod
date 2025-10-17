@@ -2,8 +2,6 @@ module github.com/carabiner-dev/bnd
 
 go 1.24.8
 
-replace github.com/carabiner-dev/signer => ../signer
-
 require (
 	github.com/carabiner-dev/attestation v0.2.0
 	github.com/carabiner-dev/collector v0.2.5
@@ -11,7 +9,7 @@ require (
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.3.1
-	github.com/carabiner-dev/signer v0.3.1
+	github.com/carabiner-dev/signer v0.3.2
 	github.com/go-git/go-git/v5 v5.16.3
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0

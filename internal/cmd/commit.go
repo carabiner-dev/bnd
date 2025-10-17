@@ -48,7 +48,7 @@ func (co *commitOptions) Validate() error {
 		co.signOptions.Validate(),
 		co.predicateFileOptions.Validate(),
 		co.outFileOptions.Validate(),
-		co.Sigstore.ValidateSigner(),
+		co.ValidateSigner(),
 	)
 
 	if co.Sha != "" && co.Tag != "" {
@@ -76,8 +76,8 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 	co.predicateFileOptions.AddFlags(cmd)
 	co.outFileOptions.AddFlags(cmd)
 
-	co.Sigstore.FlagPrefix = "sigstore"
-	co.Sigstore.HideOIDCOptions = true
+	co.FlagPrefix = sigstoreFlagPrefix
+	co.HideOIDCOptions = true
 	co.Sigstore.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
