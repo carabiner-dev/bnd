@@ -15,6 +15,8 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/predicate"
 	"github.com/carabiner-dev/collector/statement/intoto"
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/options"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -28,7 +30,7 @@ type commitOptions struct {
 	predicateFileOptions
 	signOptions
 	outFileOptions
-	sigstoreOptions
+	options.Sigstore
 	CloneAddress     string
 	repoURL          string
 	repoPath         string
@@ -46,7 +48,7 @@ func (co *commitOptions) Validate() error {
 		co.signOptions.Validate(),
 		co.predicateFileOptions.Validate(),
 		co.outFileOptions.Validate(),
-		co.sigstoreOptions.Validate(),
+		co.Sigstore.ValidateSigner(),
 	)
 
 	if co.Sha != "" && co.Tag != "" {
@@ -73,7 +75,10 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 	co.signOptions.AddFlags(cmd)
 	co.predicateFileOptions.AddFlags(cmd)
 	co.outFileOptions.AddFlags(cmd)
-	co.sigstoreOptions.AddFlags(cmd)
+
+	co.Sigstore.FlagPrefix = "sigstore"
+	co.Sigstore.HideOIDCOptions = true
+	co.Sigstore.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
 		&co.Sha, "sha", "", "commit hash to attest (defaults to HEAD of main branch)",
@@ -254,9 +259,10 @@ Same, but cloning the repo from a local clone:
 
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
-			signer := getSigner(&opts.sigstoreOptions, &opts.signOptions)
+			sg := signer.NewSigner()
+			sg.Options.Sigstore = opts.Sigstore
 
-			bundle, err := signer.SignStatement(attData)
+			bundle, err := sg.SignStatement(attData)
 			if err != nil {
 				return fmt.Errorf("writing signing statement: %w", err)
 			}
@@ -267,7 +273,7 @@ Same, but cloning the repo from a local clone:
 			}
 			defer closer()
 
-			if err := signer.WriteBundle(bundle, o); err != nil {
+			if err := sg.WriteBundle(bundle, o); err != nil {
 				return err
 			}
 			return nil

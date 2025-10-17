@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/carabiner-dev/signer"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/log"
@@ -81,16 +80,4 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatal(err)
 	}
-}
-
-// getSigner builds a bnd signer from a sigstore options set
-func getSigner(opts *sigstoreOptions, sopts *signOptions) *signer.Signer {
-	s := signer.NewSigner()
-	s.Options.TufRootPath = opts.TufRootPath
-	s.Options.TufRootURL = opts.TufRootURL
-	s.Options.OidcClientID = sopts.OidcClientID
-	s.Options.OidcIssuer = sopts.OidcIssuer
-	s.Options.OidcRedirectURL = sopts.OidcRedirectURL
-
-	return s
 }

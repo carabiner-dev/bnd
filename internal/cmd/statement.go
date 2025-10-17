@@ -10,11 +10,14 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/options"
 )
 
 type statementOptions struct {
 	signOptions
-	sigstoreOptions
+	options.Sigstore
 	outFileOptions
 	StatementPath string
 }
@@ -24,7 +27,7 @@ func (so *statementOptions) Validate() error {
 	errs := append([]error{},
 		so.signOptions.Validate(),
 		so.outFileOptions.Validate(),
-		so.sigstoreOptions.Validate(),
+		so.Sigstore.ValidateSigner(),
 	)
 
 	if so.StatementPath == "" {
@@ -34,9 +37,12 @@ func (so *statementOptions) Validate() error {
 }
 
 func (so *statementOptions) AddFlags(cmd *cobra.Command) {
+	so.Sigstore.FlagPrefix = "sigstore"
+	so.Sigstore.HideOIDCOptions = true
+	so.Sigstore.AddFlags(cmd)
+
 	so.signOptions.AddFlags(cmd)
 	so.outFileOptions.AddFlags(cmd)
-	so.sigstoreOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVarP(
 		&so.StatementPath, "statement", "s", "",
@@ -78,7 +84,8 @@ func addStatement(parentCmd *cobra.Command) {
 				return fmt.Errorf("reading statement data: %w", err)
 			}
 
-			signer := getSigner(&opts.sigstoreOptions, &opts.signOptions)
+			signer := signer.NewSigner()
+			signer.Options.Sigstore = opts.Sigstore
 
 			bundle, err := signer.SignStatement(attData)
 			if err != nil {

@@ -15,6 +15,8 @@ import (
 	"github.com/carabiner-dev/collector/predicate"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	"github.com/carabiner-dev/hasher"
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/options"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -24,7 +26,7 @@ import (
 
 type predicateOptions struct {
 	signOptions
-	sigstoreOptions
+	options.Sigstore
 	outFileOptions
 	predicateFileOptions
 	SubjectValues    []string
@@ -55,7 +57,7 @@ func (po *predicateOptions) Validate() error {
 	errs := append([]error{},
 		po.signOptions.Validate(),
 		po.predicateFileOptions.Validate(),
-		po.sigstoreOptions.Validate(),
+		po.Sigstore.ValidateSigner(),
 		po.outFileOptions.Validate(),
 	)
 
@@ -74,8 +76,11 @@ func (po *predicateOptions) Validate() error {
 func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 	po.signOptions.AddFlags(cmd)
 	po.predicateFileOptions.AddFlags(cmd)
-	po.sigstoreOptions.AddFlags(cmd)
 	po.outFileOptions.AddFlags(cmd)
+
+	po.Sigstore.FlagPrefix = "sigstore"
+	po.Sigstore.HideOIDCOptions = true
+	po.Sigstore.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&po.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
@@ -102,6 +107,7 @@ var (
 
 func addPredicate(parentCmd *cobra.Command) {
 	opts := &predicateOptions{}
+
 	attCmd := &cobra.Command{
 		Short:             "packs a new attestation into a bundle from a JSON predicate",
 		Use:               "predicate",
@@ -215,7 +221,8 @@ func addPredicate(parentCmd *cobra.Command) {
 
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
-			signer := getSigner(&opts.sigstoreOptions, &opts.signOptions)
+			signer := signer.NewSigner()
+			signer.Options.Sigstore = opts.Sigstore
 
 			bundle, err := signer.SignStatement(attData)
 			if err != nil {
