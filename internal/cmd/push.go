@@ -10,7 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/carabiner-dev/bnd/pkg/upload"
+	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/collector/envelope"
+	"github.com/carabiner-dev/collector/repository/github"
 )
 
 type pushOptions struct {
@@ -128,12 +130,28 @@ Same but with shortcut positional arguments:
 
 			cmd.SilenceUsage = true
 
-			client := upload.NewClient()
+			repo, err := github.New(
+				github.WithOwner(opts.RepoOrg), github.WithRepo(opts.RepoName),
+			)
+			if err != nil {
+				return fmt.Errorf("creating collector repository: %w", err)
+			}
 
-			for _, bundlePath := range opts.Bundles {
-				if err := client.PushBundleFileToGithub(opts.RepoOrg, opts.RepoName, bundlePath); err != nil {
-					return fmt.Errorf("pushing %q: %w", bundlePath, err)
-				}
+			agent, err := collector.New(
+				collector.WithRepository(repo),
+			)
+			if err != nil {
+				return fmt.Errorf("creating collector agent: %w", err)
+			}
+
+			// Parse all envelopes
+			envs, err := envelope.Parsers.ParseFiles(opts.Bundles)
+			if err != nil {
+				return fmt.Errorf("parsing envelopes: %w", err)
+			}
+
+			if err := agent.Store(cmd.Context(), envs); err != nil {
+				return fmt.Errorf("storing envelopes: %w", err)
 			}
 			return nil
 		},
