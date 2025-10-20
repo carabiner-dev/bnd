@@ -5,7 +5,7 @@ go 1.24.8
 require (
 	github.com/carabiner-dev/attestation v0.2.0
 	github.com/carabiner-dev/collector v0.2.5
-	github.com/carabiner-dev/command v0.1.1
+	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.3.1
