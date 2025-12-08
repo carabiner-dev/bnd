@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/bnd
 
-go 1.24.8
+go 1.24.11
 
 require (
 	github.com/carabiner-dev/attestation v0.2.0
@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/policy v0.3.1
+	github.com/carabiner-dev/policy v0.4.0
 	github.com/carabiner-dev/signer v0.3.2
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/in-toto/attestation v1.1.2
