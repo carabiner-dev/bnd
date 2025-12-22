@@ -9,11 +9,11 @@ require (
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d
-	github.com/carabiner-dev/signer v0.3.4
+	github.com/carabiner-dev/signer v0.3.5
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
-	github.com/sigstore/sigstore v1.10.0
+	github.com/sigstore/sigstore v1.10.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
@@ -40,7 +40,7 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.18.1 // indirect
-	github.com/coreos/go-oidc/v3 v3.16.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -140,8 +140,8 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.33.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251103181224-f26f9409b101 // indirect
