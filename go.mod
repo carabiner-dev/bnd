@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d
+	github.com/carabiner-dev/policy v0.4.1
 	github.com/carabiner-dev/signer v0.3.5
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/in-toto/attestation v1.1.2
