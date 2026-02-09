@@ -10,9 +10,9 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
-	papi "github.com/carabiner-dev/policy/api/v1"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"
+	signer "github.com/carabiner-dev/signer/api/v1"
 )
 
 func New(fn ...FnOpt) (*Renderer, error) {
@@ -56,7 +56,7 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 		if v := att.GetVerification(); v != nil {
 			idstr = "[No identity found]\n"
 			if v.GetVerified() {
-				if sigv, ok := v.(*papi.Verification); ok {
+				if sigv, ok := v.(*signer.Verification); ok {
 					if sigv.GetSignature().GetIdentities() != nil {
 						idstr = ""
 						for i, id := range sigv.GetSignature().GetIdentities() {

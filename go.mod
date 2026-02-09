@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/bnd
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/carabiner-dev/attestation v0.2.0
@@ -8,8 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d
-	github.com/carabiner-dev/signer v0.3.5
+	github.com/carabiner-dev/signer v0.3.6
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
@@ -34,6 +33,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20251126193927-142e907140f5 // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
+	github.com/carabiner-dev/policy v0.4.1 // indirect
 	github.com/carabiner-dev/predicates v0.1.0 // indirect
 	github.com/carabiner-dev/vcslocator v0.3.3-0.20260110024210-a5602e9845b5 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -145,7 +145,7 @@ require (
 	golang.org/x/oauth2 v0.33.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251103181224-f26f9409b101 // indirect
