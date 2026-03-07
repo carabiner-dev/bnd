@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/bnd
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/carabiner-dev/attestation v0.2.0
