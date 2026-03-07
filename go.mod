@@ -12,7 +12,6 @@ require (
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
-	github.com/sigstore/sigstore v1.10.3
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
@@ -122,6 +121,7 @@ require (
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/rekor v1.4.3 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.0.1 // indirect
+	github.com/sigstore/sigstore v1.10.3 // indirect
 	github.com/sigstore/sigstore-go v1.1.4 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect

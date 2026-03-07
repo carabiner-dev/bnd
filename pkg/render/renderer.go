@@ -10,9 +10,9 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
+	signer "github.com/carabiner-dev/signer/api/v1"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"
-	signer "github.com/carabiner-dev/signer/api/v1"
 )
 
 func New(fn ...FnOpt) (*Renderer, error) {
