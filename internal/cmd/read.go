@@ -144,13 +144,20 @@ SBOMs:
 			}
 
 			// Build the fetch options  from the specified options
-			funcs, err := buildFetchOptionFuncs(opts)
-			if err != nil {
-				return err
-			}
+			funcs := buildFetchOptionFuncs(opts)
 
-			// Fetch the attestations
-			atts, err := agent.Fetch(context.Background(), funcs...)
+			var atts []attestation.Envelope
+			// Call the optimized methods if subjects are specified
+			if len(opts.subjects) > 0 {
+				subs, err2 := opts.getSubjects()
+				if err2 != nil {
+					return nil
+				}
+				atts, err = agent.FetchAttestationsBySubject(cmd.Context(), subs)
+			} else {
+				// Fetch the attestations
+				atts, err = agent.Fetch(context.Background(), funcs...)
+			}
 			if err != nil {
 				return fmt.Errorf("fetching attestations: %w", err)
 			}
@@ -256,7 +263,7 @@ func getOutputWriter(opts *readOptions) (o io.Writer, closer func(), err error) 
 	return o, closer, nil
 }
 
-func buildFetchOptionFuncs(opts *readOptions) ([]collector.FetchOptionsFunc, error) {
+func buildFetchOptionFuncs(opts *readOptions) []collector.FetchOptionsFunc {
 	funcs := []collector.FetchOptionsFunc{}
 	enabledFilters := []attestation.Filter{}
 
@@ -271,29 +278,9 @@ func buildFetchOptionFuncs(opts *readOptions) ([]collector.FetchOptionsFunc, err
 		})
 	}
 
-	// If there are any subject hashses defined, add filters for them
-	if len(opts.subjects) > 0 {
-		hs, err := opts.getHashSet()
-		if err != nil {
-			return nil, fmt.Errorf("reading subject hashes: %w", err)
-		}
-		hashList := []map[string]string{}
-
-		for _, b := range hs {
-			m := map[string]string{}
-			for algo, val := range b {
-				m[algo.String()] = val
-			}
-			hashList = append(hashList, m)
-		}
-		enabledFilters = append(enabledFilters, &filters.SubjectHashMatcher{
-			HashSets: hashList,
-		})
-	}
-
 	if len(enabledFilters) > 0 {
 		q := attestation.NewQuery()
 		funcs = append(funcs, collector.WithQuery(q.WithFilter(enabledFilters...)))
 	}
-	return funcs, nil
+	return funcs
 }

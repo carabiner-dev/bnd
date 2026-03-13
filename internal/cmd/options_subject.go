@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
@@ -53,7 +54,11 @@ func getSubjectHashes(hstrings []string) (hasher.FileHashSet, error) {
 			continue
 		}
 
-		algo := strings.ToLower(pts[1])
+		algo := pts[1]
+		if !strings.HasPrefix(algo, "git") {
+			algo = strings.ToLower(algo)
+		}
+
 		if _, ok := intoto.HashAlgorithms[algo]; !ok {
 			return nil, errors.New("invalid hash algorithm in subject")
 		}
@@ -80,4 +85,18 @@ func getSubjectHashes(hstrings []string) (hasher.FileHashSet, error) {
 	}
 
 	return res, nil
+}
+
+// getSubjects returns the hashes specified as subjects as a slice of
+// attestation.Subject structs
+func (so *subjectsOptions) getSubjects() ([]attestation.Subject, error) {
+	hashes, err := so.getHashSet()
+	if err != nil {
+		return nil, err
+	}
+	ret := []attestation.Subject{}
+	for _, rd := range hashes.ToResourceDescriptors() {
+		ret = append(ret, rd)
+	}
+	return ret, nil
 }
