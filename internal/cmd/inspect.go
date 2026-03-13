@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/command"
+	"github.com/carabiner-dev/command/keys"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 
@@ -20,21 +20,21 @@ import (
 )
 
 type inspectOptions struct {
-	command.KeyOptions
+	keys.Options
 	bundleOptions
 }
 
 // Validates the options in context with arguments
 func (o *inspectOptions) Validate() error {
 	return errors.Join(
-		o.KeyOptions.Validate(),
+		o.Options.Validate(),
 		o.bundleOptions.Validate(),
 	)
 }
 
 func (o *inspectOptions) AddFlags(cmd *cobra.Command) {
 	o.bundleOptions.AddFlags(cmd)
-	o.KeyOptions.AddFlags(cmd)
+	o.Options.AddFlags(cmd)
 }
 
 func addInspect(parentCmd *cobra.Command) {

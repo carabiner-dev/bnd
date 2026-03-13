@@ -27,7 +27,7 @@ func (co *collectorOptions) Validate() error {
 // GetAgent returns a collector agent preloaded with the repositories
 // defined in the options set. If there are no repos in the options, it
 // returns an error.
-func (co *collectorOptions) GetAgent() (*collector.Agent, error) {
+func (co *collectorOptions) GetAgent(initFuncs ...collector.InitFunction) (*collector.Agent, error) {
 	if err := collector.LoadDefaultRepositoryTypes(); err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (co *collectorOptions) GetAgent() (*collector.Agent, error) {
 		return nil, fmt.Errorf("no collector repositories defined")
 	}
 
-	agent, err := collector.New()
+	agent, err := collector.New(initFuncs...)
 	if err != nil {
 		return nil, err
 	}
