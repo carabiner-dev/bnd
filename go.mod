@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/carabiner-dev/attestation v0.2.1
 	github.com/carabiner-dev/collector v0.2.9
-	github.com/carabiner-dev/command v0.2.0
+	github.com/carabiner-dev/command v0.3.0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/signer v0.3.7
