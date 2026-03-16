@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/signer v0.3.7
+	github.com/carabiner-dev/signer v0.4.1
 	github.com/go-git/go-git/v5 v5.17.0
 	github.com/in-toto/attestation v1.1.2
 	github.com/sigstore/protobuf-specs v0.5.0
@@ -23,7 +23,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.9.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v1.3.0 // indirect
+	github.com/ProtonMail/go-crypto v1.4.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
