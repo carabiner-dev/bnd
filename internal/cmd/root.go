@@ -75,6 +75,7 @@ func Execute() {
 	addUnpack(rootCmd)
 	addCommit(rootCmd)
 	addRead(rootCmd)
+	addLs(rootCmd)
 	rootCmd.AddCommand(version.WithFont("doom"))
 
 	if err := rootCmd.Execute(); err != nil {
