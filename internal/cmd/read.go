@@ -16,8 +16,9 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/filters"
-	"github.com/carabiner-dev/command"
+	"github.com/carabiner-dev/command/keys"
 	"github.com/carabiner-dev/jsonl"
+	"github.com/carabiner-dev/signer/key"
 	"github.com/spf13/cobra"
 
 	"github.com/carabiner-dev/bnd/pkg/render"
@@ -27,7 +28,7 @@ type readOptions struct {
 	collectorOptions
 	outFileOptions
 	subjectsOptions
-	command.KeyOptions
+	keys.Options
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
@@ -41,7 +42,7 @@ func (ro *readOptions) Validate() error {
 	errs = append(errs,
 		ro.collectorOptions.Validate(),
 		ro.outFileOptions.Validate(),
-		ro.KeyOptions.Validate(),
+		ro.Options.Validate(),
 	)
 
 	if ro.predicates && ro.statements {
@@ -56,7 +57,7 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
 	ro.subjectsOptions.AddFlags(cmd)
-	ro.KeyOptions.AddFlags(cmd)
+	ro.Options.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -138,7 +139,13 @@ SBOMs:
 				return fmt.Errorf("validating options: %w", err)
 			}
 
-			agent, err := opts.GetAgent()
+			// Parse any public keys passed in args
+			parsedKeys, err := opts.ParseKeys()
+			if err != nil {
+				return fmt.Errorf("parsing public keys: %w", err)
+			}
+
+			agent, err := opts.GetAgent(collector.WithKeys(parsedKeys...))
 			if err != nil {
 				return fmt.Errorf("creating collector agent: %w", err)
 			}
@@ -173,23 +180,17 @@ SBOMs:
 				fmt.Println("-----------------")
 			}
 
-			return renderAttestations(opts, atts, o)
+			return renderAttestations(opts, parsedKeys, atts, o)
 		},
 	}
 	opts.AddFlags(readCmd)
 	parentCmd.AddCommand(readCmd)
 }
 
-func renderAttestations(opts *readOptions, atts []attestation.Envelope, o io.Writer) error {
-	// Parse any public keys passed in args
-	keys, err := opts.ParseKeys()
-	if err != nil {
-		return fmt.Errorf("parsing public keys: %w", err)
-	}
-
+func renderAttestations(opts *readOptions, verificationKeys []key.PublicKeyProvider, atts []attestation.Envelope, o io.Writer) error {
 	renderer, err := render.New(
 		render.WithVerifySignatures(opts.VerifySignatures),
-		render.WithPublicKey(keys...),
+		render.WithPublicKey(verificationKeys...),
 	)
 	if err != nil {
 		return err
