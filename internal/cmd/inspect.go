@@ -15,6 +15,7 @@ import (
 	"github.com/carabiner-dev/jsonl"
 	"github.com/spf13/cobra"
 
+	"github.com/carabiner-dev/bnd/internal/supplychain"
 	"github.com/carabiner-dev/bnd/pkg/bundle"
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
@@ -22,6 +23,7 @@ import (
 type inspectOptions struct {
 	keys.Options
 	bundleOptions
+	supplyChainOpts supplychain.Options
 }
 
 // Validates the options in context with arguments
@@ -29,12 +31,14 @@ func (o *inspectOptions) Validate() error {
 	return errors.Join(
 		o.Options.Validate(),
 		o.bundleOptions.Validate(),
+		o.supplyChainOpts.Validate(),
 	)
 }
 
 func (o *inspectOptions) AddFlags(cmd *cobra.Command) {
 	o.bundleOptions.AddFlags(cmd)
 	o.Options.AddFlags(cmd)
+	o.supplyChainOpts.AddFlags(cmd)
 }
 
 func addInspect(parentCmd *cobra.Command) {
@@ -74,6 +78,15 @@ data about the bundle.
 				return fmt.Errorf("opening bundle: %w", err)
 			}
 			defer closer()
+
+			// Merge supply chain keys
+			if conf := opts.supplyChainOpts.GetSupplyChainConf(); conf != nil {
+				scKeys, err := conf.GetPublicKeys()
+				if err != nil {
+					return fmt.Errorf("getting supply chain keys: %w", err)
+				}
+				opts.AddKeys(scKeys...)
+			}
 
 			keys, err := opts.ParseKeys()
 			if err != nil {

@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
+	"github.com/carabiner-dev/bnd/internal/supplychain"
 	"github.com/carabiner-dev/bnd/pkg/bundle"
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
@@ -35,6 +36,7 @@ type lsOptions struct {
 	collectorOptions
 	subjectsOptions
 	keyOptions       keys.Options
+	supplyChainOpts  supplychain.Options
 	VerifySignatures bool
 	predicateTypes   []string
 }
@@ -43,6 +45,7 @@ func (lo *lsOptions) Validate() error {
 	return errors.Join(
 		lo.collectorOptions.Validate(),
 		lo.keyOptions.Validate(),
+		lo.supplyChainOpts.Validate(),
 	)
 }
 
@@ -50,6 +53,7 @@ func (lo *lsOptions) AddFlags(cmd *cobra.Command) {
 	lo.collectorOptions.AddFlags(cmd)
 	lo.subjectsOptions.AddFlags(cmd)
 	lo.keyOptions.AddFlags(cmd)
+	lo.supplyChainOpts.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&lo.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -90,11 +94,22 @@ Examples:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if len(opts.collectors) == 0 {
-				return cmd.Help()
-			}
 			if err := opts.Validate(); err != nil {
 				return fmt.Errorf("validating options: %w", err)
+			}
+
+			// Merge supply chain config into collectors and keys
+			if conf := opts.supplyChainOpts.GetSupplyChainConf(); conf != nil {
+				opts.AddCollectorStrings(conf.GetRepositories())
+				scKeys, err := conf.GetPublicKeys()
+				if err != nil {
+					return fmt.Errorf("getting supply chain keys: %w", err)
+				}
+				opts.keyOptions.AddKeys(scKeys...)
+			}
+
+			if len(opts.collectors) == 0 {
+				return cmd.Help()
 			}
 
 			parsedKeys, err := opts.keyOptions.ParseKeys()

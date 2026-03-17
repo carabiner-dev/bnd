@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+package carabiner.supplychain.v1;
+
+option go_package = "github.com/carabiner-dev/bnd/internal/api/v1";
+
+// SupplyChainConfig represents the parsed .supplychain.yaml configuration file.
+message SupplyChainConfig {
+  // Metadata contains repository and source information.
+  Metadata metadata = 1;
+
+  // Keys contains cryptographic key material for verification.
+  Keys keys = 2;
+}
+
+// Metadata holds the repository references for the supply chain.
+message Metadata {
+  // Repositories is a list of collector repository strings.
+  repeated string repositories = 1;
+}
+
+// Keys holds key material for verification.
+message Keys {
+  // Public is a list of public key references (inline PEM data, URLs, or file paths).
+  repeated string public = 1;
+}

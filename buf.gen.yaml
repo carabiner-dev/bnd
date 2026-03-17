@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+# SPDX-License-Identifier: Apache-2.0
+---
+version: v2
+
+managed:
+  enabled: true
+inputs:
+  - directory: proto
+plugins:
+  - protoc_builtin: go
+    out: .
+    opt:
+      - paths=import
+      - module=github.com/carabiner-dev/bnd

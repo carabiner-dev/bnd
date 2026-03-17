@@ -21,6 +21,7 @@ import (
 	"github.com/carabiner-dev/signer/key"
 	"github.com/spf13/cobra"
 
+	"github.com/carabiner-dev/bnd/internal/supplychain"
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
 
@@ -29,6 +30,7 @@ type readOptions struct {
 	outFileOptions
 	subjectsOptions
 	keys.Options
+	supplyChainOpts  supplychain.Options
 	VerifySignatures bool
 	predicates       bool
 	statements       bool
@@ -43,6 +45,7 @@ func (ro *readOptions) Validate() error {
 		ro.collectorOptions.Validate(),
 		ro.outFileOptions.Validate(),
 		ro.Options.Validate(),
+		ro.supplyChainOpts.Validate(),
 	)
 
 	if ro.predicates && ro.statements {
@@ -58,6 +61,7 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	ro.outFileOptions.AddFlags(cmd)
 	ro.subjectsOptions.AddFlags(cmd)
 	ro.Options.AddFlags(cmd)
+	ro.supplyChainOpts.AddFlags(cmd)
 
 	cmd.PersistentFlags().BoolVarP(
 		&ro.VerifySignatures, "verify", "v", true, "verify the signatures of read attestations",
@@ -131,12 +135,23 @@ SBOMs:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := opts.Validate(); err != nil {
+				return fmt.Errorf("validating options: %w", err)
+			}
+
+			// Merge supply chain config into collectors and keys
+			if conf := opts.supplyChainOpts.GetSupplyChainConf(); conf != nil {
+				opts.AddCollectorStrings(conf.GetRepositories())
+				scKeys, err := conf.GetPublicKeys()
+				if err != nil {
+					return fmt.Errorf("getting supply chain keys: %w", err)
+				}
+				opts.AddKeys(scKeys...)
+			}
+
 			// If there are no collectors, don't err. Just return the help screen
 			if len(opts.collectors) == 0 {
 				return cmd.Help()
-			}
-			if err := opts.Validate(); err != nil {
-				return fmt.Errorf("validating options: %w", err)
 			}
 
 			// Parse any public keys passed in args

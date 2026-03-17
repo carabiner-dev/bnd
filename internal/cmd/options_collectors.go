@@ -20,6 +20,11 @@ func (co *collectorOptions) AddFlags(cmd *cobra.Command) {
 	)
 }
 
+// AddCollectorStrings appends additional collector strings to the options.
+func (co *collectorOptions) AddCollectorStrings(collectors []string) {
+	co.collectors = append(co.collectors, collectors...)
+}
+
 func (co *collectorOptions) Validate() error {
 	return nil
 }
