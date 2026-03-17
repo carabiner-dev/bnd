@@ -83,6 +83,15 @@ func (c *SupplyChainConfig) GetPublicKeys() ([]key.PublicKeyProvider, error) {
 	return providers, nil
 }
 
+// GetRepositories returns the collector repository strings from the config's
+// metadata section.
+func (c *SupplyChainConfig) GetRepositories() []string {
+	if c.GetMetadata() == nil {
+		return nil
+	}
+	return c.GetMetadata().GetRepositories()
+}
+
 // isURL returns true if the string looks like an HTTP(S) URL.
 func isURL(s string) bool {
 	u, err := url.Parse(s)
