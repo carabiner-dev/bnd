@@ -148,7 +148,19 @@ Examples:
 				return fmt.Errorf("building rows: %w", err)
 			}
 
-			printLsTable(os.Stdout, rows)
+			hasSubjects := len(opts.subjects) > 0
+			hasTypes := len(opts.predicateTypes) > 0
+
+			switch {
+			case hasSubjects && hasTypes:
+				printLsTableFiltered(os.Stdout, rows, opts.subjects, opts.predicateTypes)
+			case hasSubjects:
+				printLsTableBySubject(os.Stdout, rows, opts.subjects)
+			case hasTypes:
+				printLsTableByType(os.Stdout, rows, opts.predicateTypes)
+			default:
+				printLsTable(os.Stdout, rows)
+			}
 			return nil
 		},
 	}
@@ -299,6 +311,76 @@ func printLsTable(w io.Writer, rows []lsRow) {
 	// Print rows
 	for _, r := range rows {
 		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
+	}
+}
+
+// printLsTableBySubject renders a two-column table (predicate type + identity)
+// preceded by a header showing the subjects being filtered. Each column gets
+// 50% of the terminal width.
+func printLsTableBySubject(w io.Writer, rows []lsRow, subjects []string) {
+	totalWidth := terminalWidth()
+	colWidth := (totalWidth - lsColumnGap) / 2
+
+	for _, s := range subjects {
+		fmt.Fprintf(w, "Subject: %s\n", s) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	printRow := func(a, b string) {
+		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
+	}
+
+	printRow(lsHeaderPredicateType, lsHeaderSignerID)
+	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
+
+	for _, r := range rows {
+		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth))
+	}
+}
+
+// printLsTableByType renders a two-column table (identity + subject)
+// preceded by a header showing the predicate types being filtered. Each
+// column gets 50% of the terminal width.
+func printLsTableByType(w io.Writer, rows []lsRow, predicateTypes []string) {
+	totalWidth := terminalWidth()
+	colWidth := (totalWidth - lsColumnGap) / 2
+
+	for _, pt := range predicateTypes {
+		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	printRow := func(a, b string) {
+		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
+	}
+
+	printRow(lsHeaderSignerID, lsHeaderSubject)
+	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
+
+	for _, r := range rows {
+		printRow(truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
+	}
+}
+
+// printLsTableFiltered renders a single-column table of identities when both
+// subject and predicate type filters are active. The filters are printed above.
+func printLsTableFiltered(w io.Writer, rows []lsRow, subjects, predicateTypes []string) {
+	totalWidth := terminalWidth()
+
+	for _, pt := range predicateTypes {
+		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
+	}
+	for _, s := range subjects {
+		fmt.Fprintf(w, "Subject: %s\n", s) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	colWidth := totalWidth
+	fmt.Fprintln(w, lsHeaderSignerID)                           //nolint:errcheck // writing to terminal
+	fmt.Fprintln(w, strings.Repeat("-", len(lsHeaderSignerID))) //nolint:errcheck // writing to terminal
+
+	for _, r := range rows {
+		fmt.Fprintln(w, truncateIdentity(r.identity, colWidth)) //nolint:errcheck // writing to terminal
 	}
 }
 
