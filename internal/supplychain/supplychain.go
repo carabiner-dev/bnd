@@ -54,7 +54,8 @@ func Parse(path string) (*v1.SupplyChainConfig, error) {
 		return conf, nil
 	}
 
-	return nil, fmt.Errorf("supplychain config not found at %s", path)
+	// No config file found — this is not an error, it's optional.
+	return nil, nil
 }
 
 // ParseReader reads a supplychain config from an io.Reader.

@@ -101,9 +101,9 @@ func TestParse_YAMLFallbackFromYML(t *testing.T) {
 
 func TestParse_NotFound(t *testing.T) {
 	t.Parallel()
-	_, err := Parse(filepath.Join(t.TempDir(), ".supplychain.yaml"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "not found")
+	conf, err := Parse(filepath.Join(t.TempDir(), ".supplychain.yaml"))
+	require.NoError(t, err)
+	require.Nil(t, conf)
 }
 
 func TestResolvePaths(t *testing.T) {
