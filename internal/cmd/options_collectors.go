@@ -40,6 +40,7 @@ func (co *collectorOptions) GetAgent(initFuncs ...collector.InitFunction) (*coll
 		return nil, fmt.Errorf("no collector repositories defined")
 	}
 
+	initFuncs = append(initFuncs, collector.WithMaxReadSize(20<<20)) // 20 MiB
 	agent, err := collector.New(initFuncs...)
 	if err != nil {
 		return nil, err
