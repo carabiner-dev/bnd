@@ -4,7 +4,7 @@
 
 bnd is a utility that makes it easy to work with attestations and sigstore bundles.
 It can create new bundles by "binding" an attestation and signing it. It can verify
-existing bundles, extract data from them inspect their contents and much more.
+existing bundles, extract data from them, inspect their contents and much more.
 
 ## Features
 
@@ -16,20 +16,22 @@ chores allowing you to:
 - Pack and unpack attestations into/from linear json (jsonl) files.
 - Push attestations to storage backends.
 - Read, export and query attestation storage backends.
+- List attestations with a compact summary of predicate types, signer identities and subjects.
 - Inspect .jsonl files to view their contents.
 - Attest data from files in git commits.
 - Extract statements and predicates from sigstore bundles.
+- Configure per-repository defaults via `.supplychain.yaml` (keys, collector repositories).
 
-More information about eacho function can be found on each subcommand help screen.
+More information about each function can be found on each subcommand help screen.
 
 ## Usage
 
 ```
 🥨 bnd: a utility to work with attestations and sigstore bundles.
-	
+
 bnd (pronounced bind) is a utility that makes it easy to work with attestations
-and sigstore bundles. It can create new bundles by "binding" a sattement, signing
-it and wrappring it in a bundle. It can verify existing bundles, extract data
+and sigstore bundles. It can create new bundles by "binding" a statement, signing
+it and wrapping it in a bundle. It can verify existing bundles, extract data
 from them and inspect their contents.
 
 Usage:
@@ -54,7 +56,7 @@ Extract the predicate data from the bundle:
 
   bnd extract predicate bundle.json
 
-	
+
 
 Available Commands:
   commit      attest git commits
@@ -62,6 +64,7 @@ Available Commands:
   extract     extract data from sigstore bundles
   help        Help about any command
   inspect     prints useful information about a bundle
+  ls          list attestations from source repositories
   pack        packs one or more bundles into a jsonl formatted file
   predicate   packs a new attestation into a bundle from a JSON predicate
   push        pushes an attestation or bundle to a repository
@@ -93,12 +96,39 @@ As shown above, when binding a statement, `bnd` opens the sigstore browser flow.
 bnd has support for ambient credentials (GitHub actions for now) via [Carabiner's
 signer library](https://github.com/carabiner-dev/signer).
 
+### Listing Attestations
+
+The `bnd ls` subcommand provides a compact summary of attestations from any
+supported repository. It shows predicate types, signer identities and subjects
+in a terminal-width-aware table:
+
+```
+> bnd ls jsonl:attestations.jsonl
+PREDICATE TYPE             SIGNER IDENTITY            SUBJECT
+------------------------   ------------------------   ------------------------
+https://github.com/sl...   sigstore::.../heads/main   gitCommit:b12808f8c70...
+https://slsa.dev/veri...   sigstore::.../heads/main   gitCommit:b12808f8c70...
+https://slsa.dev/prov...   [unverified]               sha256:3d6e80bd0a359b...
+```
+
+When filtering by subject (`-s`) or predicate type (`--type`), the filtered
+columns are removed from the table and their values are printed above it instead:
+
+```
+> bnd ls --type="https://spdx.dev/Document" jsonl:attestations.jsonl
+Predicate type: https://spdx.dev/Document
+
+SIGNER IDENTITY                          SUBJECT
+--------------------------------------   --------------------------------------
+[unverified]                             sha256:29599cb2a44f3275232bc5fc48d2...
+```
+
 ### Inspecting JSONL Bundles
 
 To view the contents of JSONL files, use the `bnd inspect` subcommand:
 
 ```
-> bnd inspect attestations.jsonl 
+> bnd inspect attestations.jsonl
 
 🔎  Bundle Details:
 -------------------
@@ -122,9 +152,32 @@ Attestation #1
 ...
 ```
 
+## Supply Chain Configuration
+
+bnd supports a per-repository `.supplychain.yaml` configuration file. When
+present, it automatically provides default collector repositories and public
+keys to all subcommands that accept them (`read`, `ls`, `inspect`).
+
+```yaml
+metadata:
+    repositories:
+        - jsonl:attestations.jsonl
+        - github:owner/repo
+keys:
+    public:
+        - path/to/key.pub
+        - https://example.com/key.pub
+        - |
+          -----BEGIN PUBLIC KEY-----
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+          -----END PUBLIC KEY-----
+```
+
+The file is loaded automatically from the current directory. Use the
+`--dotsupplychain` flag to specify an alternate path.
 
 ## Native Sigstore Signing
 
 `bnd` implements sigstore keyless signing just as cosign does. It supports the
 interactive and device flows as well as limited initial support for ambient
-credentials (initaially GitHub actions tokens).
+credentials (initially GitHub actions tokens).
