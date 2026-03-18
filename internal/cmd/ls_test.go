@@ -32,25 +32,23 @@ func TestTruncate(t *testing.T) {
 	}
 }
 
-func TestFitColumns(t *testing.T) {
+func TestColumnWidth(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
-		name             string
-		maxPred, maxID   int
-		totalWidth       int
-		wantPred, wantID int
+		name       string
+		totalWidth int
+		want       int
 	}{
-		{"fits", 20, 20, 80, 20, 20},
-		{"exact-fit", 20, 20, 43, 20, 20},
-		{"trim-equally", 30, 30, 43, 20, 20},
-		{"minimum-width", 50, 50, 15, 6, 6},
+		{"standard-80", 80, 24},
+		{"wide-120", 120, 38},
+		{"narrow-30", 30, 8},
+		{"very-narrow", 9, 1},
+		{"minimum-clamp", 2, 1},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			colPred, colID := fitColumns(tt.maxPred, tt.maxID, tt.totalWidth)
-			require.Equal(t, tt.wantPred, colPred, "predicate column width")
-			require.Equal(t, tt.wantID, colID, "identity column width")
-			require.LessOrEqual(t, colPred+colID+lsColumnGap, tt.totalWidth, "total must fit")
+			got := columnWidth(tt.totalWidth)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -58,9 +56,9 @@ func TestFitColumns(t *testing.T) {
 func TestPrintLsTable(t *testing.T) {
 	t.Parallel()
 	rows := []lsRow{
-		{"https://spdx.dev/Document", "sigstore::accounts.google.com::user@example.com"},
-		{"https://slsa.dev/provenance/v1", "key::ecdsa::6F64FADA"},
-		{"", "key::rsa::ABCD1234"},
+		{"https://spdx.dev/Document", "sigstore::accounts.google.com::user@example.com", "sha256:abc123"},
+		{"https://slsa.dev/provenance/v1", "key::ecdsa::6F64FADA", "sha256:def456"},
+		{"", "key::rsa::ABCD1234", ""},
 	}
 
 	var buf bytes.Buffer
@@ -73,15 +71,16 @@ func TestPrintLsTable(t *testing.T) {
 	// Header line
 	require.Contains(t, lines[0], "PREDICATE TYPE")
 	require.Contains(t, lines[0], "SIGNER IDENTITY")
+	require.Contains(t, lines[0], "SUBJECT")
 
 	// Separator line
 	require.Contains(t, lines[1], "---")
 
-	// First data row has predicate type
+	// First data row has predicate type and subject
 	require.Contains(t, lines[2], "spdx.dev")
+	require.Contains(t, lines[2], "sha256:abc123")
 
 	// Third row (second identity for slsa) should not repeat predicate type
-	// but should have the identity
 	require.Contains(t, lines[4], "key::rsa::ABCD1234")
 	// The predicate column should be blank
 	idx := strings.Index(lines[4], "key::rsa")

@@ -28,7 +28,9 @@ import (
 const (
 	lsHeaderPredicateType = "PREDICATE TYPE"
 	lsHeaderSignerID      = "SIGNER IDENTITY"
+	lsHeaderSubject       = "SUBJECT"
 	lsColumnGap           = 3
+	lsNumColumns          = 3
 	lsDefaultWidth        = 80
 )
 
@@ -146,7 +148,19 @@ Examples:
 				return fmt.Errorf("building rows: %w", err)
 			}
 
-			printLsTable(os.Stdout, rows)
+			hasSubjects := len(opts.subjects) > 0
+			hasTypes := len(opts.predicateTypes) > 0
+
+			switch {
+			case hasSubjects && hasTypes:
+				printLsTableFiltered(os.Stdout, rows, opts.subjects, opts.predicateTypes)
+			case hasSubjects:
+				printLsTableBySubject(os.Stdout, rows, opts.subjects)
+			case hasTypes:
+				printLsTableByType(os.Stdout, rows, opts.predicateTypes)
+			default:
+				printLsTable(os.Stdout, rows)
+			}
 			return nil
 		},
 	}
@@ -158,6 +172,7 @@ Examples:
 type lsRow struct {
 	predicateType string
 	identity      string
+	subject       string
 }
 
 // buildLsRows extracts rows from the fetched attestations. Multiple signers
@@ -186,19 +201,22 @@ func buildLsRows(opts *lsOptions, verificationKeys []key.PublicKeyProvider, atts
 			predType = "[not defined]"
 		}
 
+		subjectStr := extractSubjectSlug(att)
 		identities := extractIdentities(renderer, env, att)
 
 		if len(identities) == 0 {
-			rows = append(rows, lsRow{predicateType: predType, identity: "[unsigned]"})
+			rows = append(rows, lsRow{predicateType: predType, identity: "[unsigned]", subject: subjectStr})
 			continue
 		}
 
 		for i, id := range identities {
 			pt := ""
+			sub := ""
 			if i == 0 {
 				pt = predType
+				sub = subjectStr
 			}
-			rows = append(rows, lsRow{predicateType: pt, identity: id})
+			rows = append(rows, lsRow{predicateType: pt, identity: id, subject: sub})
 		}
 	}
 
@@ -244,6 +262,28 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 	return slugs
 }
 
+// extractSubjectSlug returns a short string identifying the first subject of
+// an attestation. It prefers the first digest hash found; if there are no
+// digests it falls back to the subject name.
+func extractSubjectSlug(att attestation.Statement) string {
+	subjects := att.GetSubjects()
+	if len(subjects) == 0 {
+		return ""
+	}
+	s := subjects[0]
+
+	// Prefer the first hash
+	for algo, val := range s.GetDigest() {
+		return algo + ":" + val
+	}
+
+	// Fall back to name
+	if name := s.GetName(); name != "" {
+		return name
+	}
+	return ""
+}
+
 // terminalWidth returns the width of the terminal or a default value.
 func terminalWidth() int {
 	fd := os.Stdout.Fd()
@@ -254,74 +294,133 @@ func terminalWidth() int {
 	return w
 }
 
-// printLsTable renders the two-column table to w, fitting within the
-// terminal width. When the content is wider than the terminal, both
-// columns are trimmed equally.
+// printLsTable renders the three-column table to w. Each column is
+// exactly 1/3 of the terminal width (minus inter-column gaps).
 func printLsTable(w io.Writer, rows []lsRow) {
 	totalWidth := terminalWidth()
+	colWidth := columnWidth(totalWidth)
 
-	// Find the longest values in each column (including headers).
-	maxPred := len(lsHeaderPredicateType)
-	maxID := len(lsHeaderSignerID)
-	for _, r := range rows {
-		if len(r.predicateType) > maxPred {
-			maxPred = len(r.predicateType)
-		}
-		if len(r.identity) > maxID {
-			maxID = len(r.identity)
-		}
-	}
-
-	// Compute column widths that fit the terminal.
-	colPred, colID := fitColumns(maxPred, maxID, totalWidth)
-
-	printRow := func(left, right string) {
-		fmt.Fprintf(w, "%-*s%s\n", colPred+lsColumnGap, left, right) //nolint:errcheck // writing to terminal
+	printRow := func(a, b, c string) {
+		fmt.Fprintf(w, "%-*s%-*s%s\n", colWidth+lsColumnGap, a, colWidth+lsColumnGap, b, c) //nolint:errcheck // writing to terminal
 	}
 
 	// Print header
-	printRow(lsHeaderPredicateType, lsHeaderSignerID)
-	printRow(strings.Repeat("-", colPred), strings.Repeat("-", colID))
+	printRow(lsHeaderPredicateType, lsHeaderSignerID, lsHeaderSubject)
+	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
 
 	// Print rows
 	for _, r := range rows {
-		printRow(truncate(r.predicateType, colPred), truncate(r.identity, colID))
+		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
 	}
 }
 
-// fitColumns computes the width of each column so they fit within totalWidth.
-// When the natural widths exceed the available space, the excess is trimmed
-// equally from both columns.
-func fitColumns(maxPred, maxID, totalWidth int) (colPred, colID int) {
-	available := totalWidth - lsColumnGap
-	if available < 2 {
-		available = 2
+// printLsTableBySubject renders a two-column table (predicate type + identity)
+// preceded by a header showing the subjects being filtered. Each column gets
+// 50% of the terminal width.
+func printLsTableBySubject(w io.Writer, rows []lsRow, subjects []string) {
+	totalWidth := terminalWidth()
+	colWidth := (totalWidth - lsColumnGap) / 2
+
+	for _, s := range subjects {
+		fmt.Fprintf(w, "Subject: %s\n", s) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	printRow := func(a, b string) {
+		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
 	}
 
-	needed := maxPred + maxID
-	if needed <= available {
-		return maxPred, maxID
+	printRow(lsHeaderPredicateType, lsHeaderSignerID)
+	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
+
+	for _, r := range rows {
+		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth))
+	}
+}
+
+// printLsTableByType renders a two-column table (identity + subject)
+// preceded by a header showing the predicate types being filtered. Each
+// column gets 50% of the terminal width.
+func printLsTableByType(w io.Writer, rows []lsRow, predicateTypes []string) {
+	totalWidth := terminalWidth()
+	colWidth := (totalWidth - lsColumnGap) / 2
+
+	for _, pt := range predicateTypes {
+		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	printRow := func(a, b string) {
+		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
 	}
 
-	// Trim equally from both columns
-	excess := needed - available
-	trimEach := excess / 2
-	trimExtra := excess % 2
+	printRow(lsHeaderSignerID, lsHeaderSubject)
+	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
 
-	colPred = maxPred - trimEach
-	colID = maxID - trimEach - trimExtra
-
-	// Ensure minimum width of 4 for each column
-	if colPred < 4 {
-		colPred = 4
-		colID = available - colPred
+	for _, r := range rows {
+		printRow(truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
 	}
-	if colID < 4 {
-		colID = 4
-		colPred = available - colID
+}
+
+// printLsTableFiltered renders a single-column table of identities when both
+// subject and predicate type filters are active. The filters are printed above.
+func printLsTableFiltered(w io.Writer, rows []lsRow, subjects, predicateTypes []string) {
+	totalWidth := terminalWidth()
+
+	for _, pt := range predicateTypes {
+		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
+	}
+	for _, s := range subjects {
+		fmt.Fprintf(w, "Subject: %s\n", s) //nolint:errcheck // writing to terminal
+	}
+	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
+
+	colWidth := totalWidth
+	fmt.Fprintln(w, lsHeaderSignerID)                           //nolint:errcheck // writing to terminal
+	fmt.Fprintln(w, strings.Repeat("-", len(lsHeaderSignerID))) //nolint:errcheck // writing to terminal
+
+	for _, r := range rows {
+		fmt.Fprintln(w, truncateIdentity(r.identity, colWidth)) //nolint:errcheck // writing to terminal
+	}
+}
+
+// columnWidth returns the width of each column given the total terminal width.
+// Each of the three columns gets an equal share of the available space after
+// subtracting the inter-column gaps.
+func columnWidth(totalWidth int) int {
+	available := totalWidth - lsColumnGap*(lsNumColumns-1)
+	if available < lsNumColumns {
+		available = lsNumColumns
+	}
+	return available / lsNumColumns
+}
+
+// truncateIdentity shortens an identity string to maxLen. When truncation is
+// needed, the type prefix (everything up to and including the first "::") is
+// kept in full, followed by "..." and as much of the tail of the remaining
+// string as fits. For example: "sigstore::...er@example.com".
+func truncateIdentity(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
 
-	return colPred, colID
+	prefix := ""
+	rest := s
+	if idx := strings.Index(s, "::"); idx >= 0 {
+		prefix = s[:idx+2]
+		rest = s[idx+2:]
+	}
+
+	ellipsis := "..."
+	available := maxLen - len(prefix) - len(ellipsis)
+	if available <= 0 {
+		// Not enough room for prefix + ellipsis + tail, fall back to simple truncate
+		return truncate(s, maxLen)
+	}
+
+	// Show the tail of the rest
+	tail := rest[len(rest)-available:]
+	return prefix + ellipsis + tail
 }
 
 // truncate shortens s to maxLen, replacing the last 3 characters with "..."
