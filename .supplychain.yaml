@@ -1,0 +1,6 @@
+---
+metadata:
+    repositories:
+        - release://github.com/carabiner-dev/bnd
+keys:
+    public: []
