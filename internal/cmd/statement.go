@@ -16,7 +16,7 @@ import (
 
 type statementOptions struct {
 	signOptions
-	options.Sigstore
+	options.Signer
 	outFileOptions
 	StatementPath string
 }
@@ -26,7 +26,7 @@ func (so *statementOptions) Validate() error {
 	errs := append([]error{},
 		so.signOptions.Validate(),
 		so.outFileOptions.Validate(),
-		so.ValidateSigner(),
+		so.Signer.Validate(),
 	)
 
 	if so.StatementPath == "" {
@@ -38,7 +38,7 @@ func (so *statementOptions) Validate() error {
 func (so *statementOptions) AddFlags(cmd *cobra.Command) {
 	so.FlagPrefix = sigstoreFlagPrefix
 	so.HideOIDCOptions = true
-	so.Sigstore.AddFlags(cmd)
+	so.Signer.AddFlags(cmd)
 
 	so.signOptions.AddFlags(cmd)
 	so.outFileOptions.AddFlags(cmd)
@@ -50,7 +50,9 @@ func (so *statementOptions) AddFlags(cmd *cobra.Command) {
 }
 
 func addStatement(parentCmd *cobra.Command) {
-	opts := &statementOptions{}
+	opts := &statementOptions{
+		Signer: options.DefaultSigner,
+	}
 	attCmd := &cobra.Command{
 		Short:             "binds an in-toto attestation in a signed bundle",
 		Use:               "statement",
@@ -84,7 +86,7 @@ func addStatement(parentCmd *cobra.Command) {
 			}
 
 			signer := signer.NewSigner()
-			signer.Options.Sigstore = opts.Sigstore
+			signer.Options = opts.Signer
 
 			bundle, err := signer.SignStatement(attData)
 			if err != nil {
