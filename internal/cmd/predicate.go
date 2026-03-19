@@ -80,7 +80,7 @@ func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 
 	po.FlagPrefix = sigstoreFlagPrefix
 	po.HideOIDCOptions = true
-	po.AddFlags(cmd)
+	po.Signer.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&po.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",

@@ -78,7 +78,7 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 
 	co.FlagPrefix = sigstoreFlagPrefix
 	co.HideOIDCOptions = true
-	co.AddFlags(cmd)
+	co.Signer.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
 		&co.Sha, "sha", "", "commit hash to attest (defaults to HEAD of main branch)",

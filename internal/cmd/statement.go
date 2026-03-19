@@ -38,7 +38,7 @@ func (so *statementOptions) Validate() error {
 func (so *statementOptions) AddFlags(cmd *cobra.Command) {
 	so.FlagPrefix = sigstoreFlagPrefix
 	so.HideOIDCOptions = true
-	so.AddFlags(cmd)
+	so.Signer.AddFlags(cmd)
 
 	so.signOptions.AddFlags(cmd)
 	so.outFileOptions.AddFlags(cmd)
