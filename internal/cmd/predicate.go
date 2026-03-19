@@ -26,7 +26,7 @@ import (
 
 type predicateOptions struct {
 	signOptions
-	options.Sigstore
+	options.Signer
 	outFileOptions
 	predicateFileOptions
 	SubjectValues    []string
@@ -57,7 +57,7 @@ func (po *predicateOptions) Validate() error {
 	errs := append([]error{},
 		po.signOptions.Validate(),
 		po.predicateFileOptions.Validate(),
-		po.ValidateSigner(),
+		po.Signer.Validate(),
 		po.outFileOptions.Validate(),
 	)
 
@@ -80,7 +80,7 @@ func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 
 	po.FlagPrefix = sigstoreFlagPrefix
 	po.HideOIDCOptions = true
-	po.Sigstore.AddFlags(cmd)
+	po.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&po.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
@@ -106,7 +106,9 @@ var (
 )
 
 func addPredicate(parentCmd *cobra.Command) {
-	opts := &predicateOptions{}
+	opts := &predicateOptions{
+		Signer: options.DefaultSigner,
+	}
 
 	attCmd := &cobra.Command{
 		Short:             "packs a new attestation into a bundle from a JSON predicate",
@@ -222,7 +224,7 @@ func addPredicate(parentCmd *cobra.Command) {
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
 			signer := signer.NewSigner()
-			signer.Options.Sigstore = opts.Sigstore
+			signer.Options = opts.Signer
 
 			bundle, err := signer.SignStatement(attData)
 			if err != nil {

@@ -30,7 +30,7 @@ type commitOptions struct {
 	predicateFileOptions
 	signOptions
 	outFileOptions
-	options.Sigstore
+	options.Signer
 	CloneAddress     string
 	repoURL          string
 	repoPath         string
@@ -48,7 +48,7 @@ func (co *commitOptions) Validate() error {
 		co.signOptions.Validate(),
 		co.predicateFileOptions.Validate(),
 		co.outFileOptions.Validate(),
-		co.ValidateSigner(),
+		co.Signer.Validate(),
 	)
 
 	if co.Sha != "" && co.Tag != "" {
@@ -78,7 +78,7 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 
 	co.FlagPrefix = sigstoreFlagPrefix
 	co.HideOIDCOptions = true
-	co.Sigstore.AddFlags(cmd)
+	co.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
 		&co.Sha, "sha", "", "commit hash to attest (defaults to HEAD of main branch)",
@@ -99,6 +99,7 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 
 func addCommit(parentCmd *cobra.Command) {
 	opts := &commitOptions{
+		Signer:      options.DefaultSigner,
 		remoteNames: []string{"upstream", "origin"},
 	}
 	commitCmd := &cobra.Command{
@@ -260,7 +261,7 @@ Same, but cloning the repo from a local clone:
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
 			sg := signer.NewSigner()
-			sg.Options.Sigstore = opts.Sigstore
+			sg.Options = opts.Signer
 
 			bundle, err := sg.SignStatement(attData)
 			if err != nil {
