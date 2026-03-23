@@ -18,7 +18,7 @@ require (
 	golang.org/x/term v0.41.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
-	sigs.k8s.io/release-sdk v0.12.5
+	sigs.k8s.io/release-sdk v0.12.6
 	sigs.k8s.io/release-utils v0.12.3
 )
 
