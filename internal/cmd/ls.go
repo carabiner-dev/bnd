@@ -100,8 +100,13 @@ Examples:
 				return fmt.Errorf("validating options: %w", err)
 			}
 
-			// Merge supply chain config into collectors and keys
-			if conf := opts.supplyChainOpts.GetSupplyChainConf(); conf != nil {
+			// Check if the supply chain config should be used
+			useConfig, notice := opts.supplyChainOpts.ShouldUseConfig(len(opts.collectors) > 0)
+			if notice != "" {
+				fmt.Fprintln(os.Stderr, notice)
+			}
+			if useConfig {
+				conf := opts.supplyChainOpts.GetSupplyChainConf()
 				opts.AddCollectorStrings(conf.GetRepositories())
 				scKeys, err := conf.GetPublicKeys()
 				if err != nil {
