@@ -8,10 +8,10 @@ require (
 	github.com/carabiner-dev/command v0.3.1-0.20260317212123-38975797a6a0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/signer v0.4.2
+	github.com/carabiner-dev/signer v0.4.3
 	github.com/go-git/go-git/v5 v5.17.2
 	github.com/in-toto/attestation v1.2.0
-	github.com/sigstore/protobuf-specs v0.5.0
+	github.com/sigstore/protobuf-specs v0.5.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
@@ -26,7 +26,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.10.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v1.4.0 // indirect
+	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
@@ -131,7 +131,7 @@ require (
 	github.com/sigstore/gitsign v0.14.0 // indirect
 	github.com/sigstore/rekor v1.5.1 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.2.1 // indirect
-	github.com/sigstore/sigstore v1.10.4 // indirect
+	github.com/sigstore/sigstore v1.10.5 // indirect
 	github.com/sigstore/sigstore-go v1.1.4 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.0.5 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
