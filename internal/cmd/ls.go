@@ -206,22 +206,29 @@ func buildLsRows(opts *lsOptions, verificationKeys []key.PublicKeyProvider, atts
 			predType = "[not defined]"
 		}
 
-		subjectStr := extractSubjectSlug(att)
+		subjectSlugs := extractSubjectSlugs(att)
+		if len(subjectSlugs) == 0 {
+			subjectSlugs = []string{""}
+		}
 		identities := extractIdentities(renderer, env, att)
-
 		if len(identities) == 0 {
-			rows = append(rows, lsRow{predicateType: predType, identity: "[unsigned]", subject: subjectStr})
-			continue
+			identities = []string{"[unsigned]"}
 		}
 
+		// First row carries predicate type, first identity and first subject.
+		// Additional identities and additional subjects each get their own
+		// row with the earlier-shown columns left blank.
 		for i, id := range identities {
 			pt := ""
 			sub := ""
 			if i == 0 {
 				pt = predType
-				sub = subjectStr
+				sub = subjectSlugs[0]
 			}
 			rows = append(rows, lsRow{predicateType: pt, identity: id, subject: sub})
+		}
+		for i := 1; i < len(subjectSlugs); i++ {
+			rows = append(rows, lsRow{subject: subjectSlugs[i]})
 		}
 	}
 
@@ -267,26 +274,27 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 	return slugs
 }
 
-// extractSubjectSlug returns a short string identifying the first subject of
-// an attestation. It prefers the first digest hash found; if there are no
-// digests it falls back to the subject name.
-func extractSubjectSlug(att attestation.Statement) string {
+// extractSubjectSlugs returns a short string identifying each subject of an
+// attestation. For each subject it prefers the first digest hash found and
+// falls back to the subject name. Subjects with neither a digest nor a name
+// are skipped.
+func extractSubjectSlugs(att attestation.Statement) []string {
 	subjects := att.GetSubjects()
-	if len(subjects) == 0 {
-		return ""
+	slugs := make([]string, 0, len(subjects))
+	for _, s := range subjects {
+		slug := ""
+		for algo, val := range s.GetDigest() {
+			slug = algo + ":" + val
+			break
+		}
+		if slug == "" {
+			slug = s.GetName()
+		}
+		if slug != "" {
+			slugs = append(slugs, slug)
+		}
 	}
-	s := subjects[0]
-
-	// Prefer the first hash
-	for algo, val := range s.GetDigest() {
-		return algo + ":" + val
-	}
-
-	// Fall back to name
-	if name := s.GetName(); name != "" {
-		return name
-	}
-	return ""
+	return slugs
 }
 
 // terminalWidth returns the width of the terminal or a default value.
