@@ -274,18 +274,54 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 	return slugs
 }
 
+// hashPriority lists digest algorithms in the order they should be picked
+// when a subject carries more than one. sha256 is preferred first; the rest
+// are ordered from strongest to weakest.
+var hashPriority = []string{
+	"sha256",
+	"sha512",
+	"sha384",
+	"sha3-512",
+	"sha3-384",
+	"sha3-256",
+	"sha3",
+	"sha224",
+	"sha1",
+	"gitCommit",
+	"md5",
+}
+
+// pickDigest returns the algorithm and value of the preferred digest in the
+// given map, following hashPriority. Unknown algorithms are considered last
+// and selected in a stable (alphabetical) order.
+func pickDigest(digests map[string]string) (algo, value string) {
+	for _, a := range hashPriority {
+		if v, ok := digests[a]; ok {
+			return a, v
+		}
+	}
+	var algos []string
+	for k := range digests {
+		algos = append(algos, k)
+	}
+	slices.Sort(algos)
+	for _, a := range algos {
+		return a, digests[a]
+	}
+	return "", ""
+}
+
 // extractSubjectSlugs returns a short string identifying each subject of an
-// attestation. For each subject it prefers the first digest hash found and
-// falls back to the subject name. Subjects with neither a digest nor a name
-// are skipped.
+// attestation. For each subject it prefers the sha256 digest, falling back to
+// the strongest available hash and finally to the subject name. Subjects with
+// neither a digest nor a name are skipped.
 func extractSubjectSlugs(att attestation.Statement) []string {
 	subjects := att.GetSubjects()
 	slugs := make([]string, 0, len(subjects))
 	for _, s := range subjects {
 		slug := ""
-		for algo, val := range s.GetDigest() {
+		if algo, val := pickDigest(s.GetDigest()); algo != "" {
 			slug = algo + ":" + val
-			break
 		}
 		if slug == "" {
 			slug = s.GetName()
