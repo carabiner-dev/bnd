@@ -7,9 +7,10 @@ on:
   push:
     tags:
       - 'v*'
+
 permissions:
   contents: read
-  
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -18,13 +19,10 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-      
+
     steps:
       - name: Setup bnd
         uses: carabiner-dev/actions/install/bnd@HEAD
-
-      - name: Setup unpack
-        uses: carabiner-dev/actions/install/unpack@HEAD
 
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -43,7 +41,7 @@ jobs:
       - name: Set tag output
         id: tag
         run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
-  
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@e24998b8b67b290c2fa8b7c14fcfa7de2c5c9b8c # v7.1.0
         id: goreleaser
@@ -53,21 +51,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate SBOM
-        run: |
-          mkdir attestations
-          unpack extract . --ignore-other-codebases -f spdx --attest > attestations/spdx.intoto.json
-          unpack extract . --ignore-other-codebases -f spdx > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
-      
+        id: sbom
+        uses: carabiner-dev/actions/unpack/sbom@73e94b6ec4adbf65bb7b9f4ecec334dc6576553f # v1.1.6
+        with:
+          push-to-release: ${{ steps.tag.outputs.tag_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Generate Provenance
         id: tejolote
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+            mkdir -p attestations
             tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output attestations/provenance.json
             bnd statement attestations/provenance.json -o attestations/bnd-${{ steps.tag.outputs.tag_name }}.provenance.json
             bnd pack attestations/ > attestations.jsonl
             gh release upload ${{ steps.tag.outputs.tag_name }} attestations.jsonl
-            gh release upload ${{ steps.tag.outputs.tag_name }} attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
             bnd push github ${{github.repository}} attestations/bnd-${{ steps.tag.outputs.tag_name }}.provenance.json
-
