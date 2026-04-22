@@ -112,6 +112,8 @@ github.com/carabiner-dev/sbomfs v0.1.0 h1:gEsmn85hod7JTLs2dDr5C1x4Af7FUEhI0lbTur
 github.com/carabiner-dev/sbomfs v0.1.0/go.mod h1:UyPyTSNx9JOLZVgTmM9WXdmgVqDWXCYwr1LK1Ts+7H0=
 github.com/carabiner-dev/signer v0.4.5 h1:H3XHHqorZw7wvLysbGCc+FM90nSdzFlODj+mIGMsYJc=
 github.com/carabiner-dev/signer v0.4.5/go.mod h1:B/53ToJAIgwM+KuDwj52+HwnlA5p8Rmz2OXQdy9x+xs=
+github.com/carabiner-dev/termtable v1.1.0 h1:b/7IqM52Wqwi9njjnAEIDddUYyX23msFkQVihkwarDs=
+github.com/carabiner-dev/termtable v1.1.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
 github.com/carabiner-dev/vcslocator v0.4.3-0.20260415221723-1e7d86696551 h1:nclmBw4ane2OjB4bJQ0cTNFYx434QMakz3jHRbhCiJw=
 github.com/carabiner-dev/vcslocator v0.4.3-0.20260415221723-1e7d86696551/go.mod h1:ERs4j/p7YF+BWbIWHZdODOoUX5N1zhUkvjAB0kZ3nCQ=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
@@ -393,6 +395,8 @@ github.com/protobom/protobom v0.5.4 h1:fMSO3wA5BEj/J6f1zgT56Ps/6pcE0NGZZzphnIoL/
 github.com/protobom/protobom v0.5.4/go.mod h1:zz85kBItD/hO6c9o18pFXgFv2UOwtAhqZDAITIfPJcs=
 github.com/regclient/regclient v0.11.3 h1:aTnVRsgFaOmezgKp7caL3zINrZKAXsMbzS1oCgD7/cA=
 github.com/regclient/regclient v0.11.3/go.mod h1:a4PDi+VyEbBuV/5hCfMjnYH8jvB7NgD0mdggwNRECy8=
+github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
+github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=

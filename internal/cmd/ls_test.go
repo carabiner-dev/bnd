@@ -32,23 +32,40 @@ func TestTruncate(t *testing.T) {
 	}
 }
 
-func TestColumnWidth(t *testing.T) {
+func TestTruncateIdentity(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
-		name       string
-		totalWidth int
-		want       int
+		name     string
+		input    string
+		maxLen   int
+		expected []string // substrings the result must contain
 	}{
-		{"standard-80", 80, 24},
-		{"wide-120", 120, 38},
-		{"narrow-30", 30, 8},
-		{"very-narrow", 9, 1},
-		{"minimum-clamp", 2, 1},
+		{
+			"fits",
+			"sigstore::token.actions.githubusercontent.com::user@example.com",
+			200,
+			[]string{"sigstore::", "user@example.com"},
+		},
+		{
+			"keeps-prefix-on-truncate",
+			"sigstore::https://token.actions.githubusercontent.com::user@example.com",
+			30,
+			[]string{"sigstore::", "..."},
+		},
+		{
+			"no-prefix-keeps-tail",
+			"abcdefghij",
+			5,
+			[]string{"...ij"}, // no "::" prefix — ellipsis + tail
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := columnWidth(tt.totalWidth)
-			require.Equal(t, tt.want, got)
+			got := truncateIdentity(tt.input, tt.maxLen)
+			require.LessOrEqual(t, len(got), tt.maxLen)
+			for _, sub := range tt.expected {
+				require.Contains(t, got, sub)
+			}
 		})
 	}
 }
@@ -64,25 +81,25 @@ func TestPrintLsTable(t *testing.T) {
 	var buf bytes.Buffer
 	printLsTable(&buf, rows)
 	output := buf.String()
-
 	lines := strings.Split(strings.TrimRight(output, "\n"), "\n")
-	require.GreaterOrEqual(t, len(lines), 5, "header + separator + 3 data rows")
 
-	// Header line
+	// Header row + header-underline rule + 3 data rows = 5 lines.
+	require.GreaterOrEqual(t, len(lines), 5, "header + rule + 3 data rows")
+
+	// Header line carries the uppercase titles.
 	require.Contains(t, lines[0], "PREDICATE TYPE")
 	require.Contains(t, lines[0], "SIGNER IDENTITY")
 	require.Contains(t, lines[0], "SUBJECT")
 
-	// Separator line
-	require.Contains(t, lines[1], "---")
+	// Second line is the header's bottom-border rule: dashes.
+	require.Contains(t, lines[1], "-")
 
-	// First data row has predicate type and subject
+	// First data row has predicate type and subject.
 	require.Contains(t, lines[2], "spdx.dev")
 	require.Contains(t, lines[2], "sha256:abc123")
 
-	// Third row (second identity for slsa) should not repeat predicate type
+	// Third row (second identity for slsa) should not repeat predicate type.
 	require.Contains(t, lines[4], "key::rsa::ABCD1234")
-	// The predicate column should be blank
 	idx := strings.Index(lines[4], "key::rsa")
 	require.GreaterOrEqual(t, idx, 0, "identity must be present in line")
 	predCol := strings.TrimRight(lines[4][:idx], " ")
@@ -96,5 +113,24 @@ func TestPrintLsTable_Empty(t *testing.T) {
 	output := buf.String()
 
 	lines := strings.Split(strings.TrimRight(output, "\n"), "\n")
-	require.Len(t, lines, 2, "just header + separator for empty table")
+	// Header + rule line = 2 lines for an empty table.
+	require.Len(t, lines, 2, "header + rule for empty table")
+	require.Contains(t, lines[0], "PREDICATE TYPE")
+	require.Contains(t, lines[1], "-")
+}
+
+func TestPrintLsTableNoFramingGlyphs(t *testing.T) {
+	t.Parallel()
+	rows := []lsRow{
+		{"https://spdx.dev/Document", "sigstore::accounts.google.com::user@example.com", "sha256:abc123"},
+	}
+	var buf bytes.Buffer
+	printLsTable(&buf, rows)
+	output := buf.String()
+
+	// No box-drawing glyphs or ASCII frame characters — only the dash
+	// rule under the header.
+	for _, r := range "│┌┐└┘├┤┬┴┼+|═║╔╗╚╝╠╣╦╩╬" {
+		require.NotContains(t, output, string(r), "unexpected frame glyph %q", r)
+	}
 }

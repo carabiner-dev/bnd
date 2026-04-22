@@ -17,8 +17,8 @@ import (
 	"github.com/carabiner-dev/command/keys"
 	signer "github.com/carabiner-dev/signer/api/v1"
 	"github.com/carabiner-dev/signer/key"
+	"github.com/carabiner-dev/termtable"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 
 	"github.com/carabiner-dev/bnd/internal/supplychain"
 	"github.com/carabiner-dev/bnd/pkg/bundle"
@@ -29,9 +29,6 @@ const (
 	lsHeaderPredicateType = "PREDICATE TYPE"
 	lsHeaderSignerID      = "SIGNER IDENTITY"
 	lsHeaderSubject       = "SUBJECT"
-	lsColumnGap           = 3
-	lsNumColumns          = 3
-	lsDefaultWidth        = 80
 )
 
 type lsOptions struct {
@@ -333,89 +330,120 @@ func extractSubjectSlugs(att attestation.Statement) []string {
 	return slugs
 }
 
-// terminalWidth returns the width of the terminal or a default value.
-func terminalWidth() int {
-	fd := os.Stdout.Fd()
-	w, _, err := term.GetSize(int(fd)) //nolint:gosec // fd is always a valid small descriptor
-	if err != nil || w <= 0 {
-		return lsDefaultWidth
+// lsBorderSet returns the border glyph set used by every ls table.
+// Horizontal runs render as ASCII '-' so the rule under the header
+// looks like the pre-termtable version. Verticals and junctions are
+// spaces — never drawn because the table has `border: none` and only
+// the header row opts back in via `border-bottom: solid`.
+func lsBorderSet() termtable.BorderSet {
+	b := termtable.BorderSet{
+		Horizontal: '-',
+		Vertical:   ' ',
 	}
-	return w
+	for i := range b.Joins {
+		b.Joins[i] = ' '
+	}
+	return b
 }
 
-// printLsTable renders the three-column table to w. Each column is
-// exactly 1/3 of the terminal width (minus inter-column gaps).
+// newLsTable builds a borderless termtable with the ls conventions
+// applied: dash horizontal rule glyphs, 1-column padding on each
+// side of content, no default borders anywhere, and the layout
+// pinned to 100 % of the terminal width (overriding termtable's
+// default 90 % ceiling).
+func newLsTable() *termtable.Table {
+	return termtable.NewTable(
+		termtable.WithBorder(lsBorderSet()),
+		termtable.WithTargetWidthPercent(100),
+		termtable.WithTableStyle("border: none"),
+	)
+}
+
+// addLsHeader appends the column-header row with an underline. Cells
+// are passed as CellOption slices so callers can supply the uppercased
+// column titles in one place.
+func addLsHeader(t *termtable.Table, titles ...string) {
+	hdr := t.AddHeader(termtable.WithRowBorderBottom(termtable.BorderEdgeSolid))
+	for _, title := range titles {
+		hdr.AddCell(termtable.WithContent(title))
+	}
+}
+
+// equalColumnWidths pins every column to an equal share of the
+// table target — the bnd "fixed thirds" look applied via termtable's
+// percent-width support. Pass n = table.NumColumns() (or the column
+// count you'll populate before writing).
+func equalColumnWidths(t *termtable.Table, n int) {
+	if n < 1 {
+		return
+	}
+	pct := 100 / n
+	for i := range n {
+		t.Column(i).Style(fmt.Sprintf("white-space: nowrap; text-overflow: ellipsis; width: %d%%", pct))
+	}
+}
+
+// printLsTable renders the three-column table to w.
 func printLsTable(w io.Writer, rows []lsRow) {
-	totalWidth := terminalWidth()
-	colWidth := columnWidth(totalWidth)
+	t := newLsTable()
+	equalColumnWidths(t, 3)
+	addLsHeader(t, lsHeaderPredicateType, lsHeaderSignerID, lsHeaderSubject)
 
-	printRow := func(a, b, c string) {
-		fmt.Fprintf(w, "%-*s%-*s%s\n", colWidth+lsColumnGap, a, colWidth+lsColumnGap, b, c) //nolint:errcheck // writing to terminal
-	}
-
-	// Print header
-	printRow(lsHeaderPredicateType, lsHeaderSignerID, lsHeaderSubject)
-	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
-
-	// Print rows
+	budget := identityBudget(t, 3)
 	for _, r := range rows {
-		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
+		row := t.AddRow()
+		row.AddCell(termtable.WithContent(r.predicateType))
+		row.AddCell(termtable.WithContent(truncateIdentity(r.identity, budget)))
+		row.AddCell(termtable.WithContent(r.subject))
 	}
+	_, _ = t.WriteTo(w) //nolint:errcheck // writing to terminal
 }
 
-// printLsTableBySubject renders a two-column table (predicate type + identity)
-// preceded by a header showing the subjects being filtered. Each column gets
-// 50% of the terminal width.
+// printLsTableBySubject renders a two-column table (predicate type +
+// identity) preceded by a header showing the subjects being filtered.
 func printLsTableBySubject(w io.Writer, rows []lsRow, subjects []string) {
-	totalWidth := terminalWidth()
-	colWidth := (totalWidth - lsColumnGap) / 2
-
 	for _, s := range subjects {
 		fmt.Fprintf(w, "Subject: %s\n", s) //nolint:errcheck // writing to terminal
 	}
 	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
 
-	printRow := func(a, b string) {
-		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
-	}
+	t := newLsTable()
+	equalColumnWidths(t, 2)
+	addLsHeader(t, lsHeaderPredicateType, lsHeaderSignerID)
 
-	printRow(lsHeaderPredicateType, lsHeaderSignerID)
-	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
-
+	budget := identityBudget(t, 2)
 	for _, r := range rows {
-		printRow(truncate(r.predicateType, colWidth), truncateIdentity(r.identity, colWidth))
+		row := t.AddRow()
+		row.AddCell(termtable.WithContent(r.predicateType))
+		row.AddCell(termtable.WithContent(truncateIdentity(r.identity, budget)))
 	}
+	_, _ = t.WriteTo(w) //nolint:errcheck // writing to terminal
 }
 
 // printLsTableByType renders a two-column table (identity + subject)
-// preceded by a header showing the predicate types being filtered. Each
-// column gets 50% of the terminal width.
+// preceded by a header showing the predicate types being filtered.
 func printLsTableByType(w io.Writer, rows []lsRow, predicateTypes []string) {
-	totalWidth := terminalWidth()
-	colWidth := (totalWidth - lsColumnGap) / 2
-
 	for _, pt := range predicateTypes {
 		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
 	}
 	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
 
-	printRow := func(a, b string) {
-		fmt.Fprintf(w, "%-*s%s\n", colWidth+lsColumnGap, a, b) //nolint:errcheck // writing to terminal
-	}
+	t := newLsTable()
+	equalColumnWidths(t, 2)
+	addLsHeader(t, lsHeaderSignerID, lsHeaderSubject)
 
-	printRow(lsHeaderSignerID, lsHeaderSubject)
-	printRow(strings.Repeat("-", colWidth), strings.Repeat("-", colWidth))
-
+	budget := identityBudget(t, 2)
 	for _, r := range rows {
-		printRow(truncateIdentity(r.identity, colWidth), truncate(r.subject, colWidth))
+		row := t.AddRow()
+		row.AddCell(termtable.WithContent(truncateIdentity(r.identity, budget)))
+		row.AddCell(termtable.WithContent(r.subject))
 	}
+	_, _ = t.WriteTo(w) //nolint:errcheck // writing to terminal
 }
 
 // printLsTableFiltered renders a single-column table of identities when both
 // subject and predicate type filters are active. The filters are printed above.
 func printLsTableFiltered(w io.Writer, rows []lsRow, subjects, predicateTypes []string) {
-	totalWidth := terminalWidth()
-
 	for _, pt := range predicateTypes {
 		fmt.Fprintf(w, "Predicate type: %s\n", pt) //nolint:errcheck // writing to terminal
 	}
@@ -424,24 +452,35 @@ func printLsTableFiltered(w io.Writer, rows []lsRow, subjects, predicateTypes []
 	}
 	fmt.Fprintln(w) //nolint:errcheck // writing to terminal
 
-	colWidth := totalWidth
-	fmt.Fprintln(w, lsHeaderSignerID)                           //nolint:errcheck // writing to terminal
-	fmt.Fprintln(w, strings.Repeat("-", len(lsHeaderSignerID))) //nolint:errcheck // writing to terminal
+	t := newLsTable()
+	t.Column(0).Style("white-space: nowrap; text-overflow: ellipsis")
+	addLsHeader(t, lsHeaderSignerID)
 
+	budget := identityBudget(t, 1)
 	for _, r := range rows {
-		fmt.Fprintln(w, truncateIdentity(r.identity, colWidth)) //nolint:errcheck // writing to terminal
+		row := t.AddRow()
+		row.AddCell(termtable.WithContent(truncateIdentity(r.identity, budget)))
 	}
+	_, _ = t.WriteTo(w) //nolint:errcheck // writing to terminal
 }
 
-// columnWidth returns the width of each column given the total terminal width.
-// Each of the three columns gets an equal share of the available space after
-// subtracting the inter-column gaps.
-func columnWidth(totalWidth int) int {
-	available := totalWidth - lsColumnGap*(lsNumColumns-1)
-	if available < lsNumColumns {
-		available = lsNumColumns
+// identityBudget estimates the content width allotted to the identity
+// column so truncateIdentity can preserve the "type::" prefix. termtable
+// handles overflow natively via text-overflow: ellipsis, but its default
+// truncation cuts the tail of the string, losing the prefix. Pre-trimming
+// keeps the prefix visible. Pass ncols as the number of columns the
+// table will end up with (the call sites know this statically).
+func identityBudget(t *termtable.Table, ncols int) int {
+	if ncols < 1 {
+		ncols = 1
 	}
-	return available / lsNumColumns
+	target := t.ResolvedTargetWidth()
+	// Overhead: seam per column gap + 2 chars of padding per column.
+	share := (target - ncols*3) / ncols
+	if share < 20 {
+		return 20
+	}
+	return share
 }
 
 // truncateIdentity shortens an identity string to maxLen. When truncation is
