@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.4
+	github.com/carabiner-dev/collector v0.3.5
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/jsonl v0.2.1
@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.10.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -36,10 +37,10 @@ require (
 	github.com/carabiner-dev/github v0.2.3 // indirect
 	github.com/carabiner-dev/openeox v1.0.0-pre.1 // indirect
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 // indirect
-	github.com/carabiner-dev/policy v0.4.5 // indirect
-	github.com/carabiner-dev/predicates v0.1.0 // indirect
+	github.com/carabiner-dev/policy v0.5.0 // indirect
+	github.com/carabiner-dev/predicates v0.5.0 // indirect
 	github.com/carabiner-dev/sbomfs v0.1.0 // indirect
-	github.com/carabiner-dev/vcslocator v0.4.3-0.20260415221723-1e7d86696551 // indirect
+	github.com/carabiner-dev/vcslocator v0.4.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
@@ -121,7 +122,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/protobom/protobom v0.5.4 // indirect
+	github.com/protobom/protobom v0.5.5 // indirect
 	github.com/regclient/regclient v0.11.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect
