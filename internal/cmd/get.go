@@ -25,7 +25,7 @@ import (
 	"github.com/carabiner-dev/bnd/pkg/render"
 )
 
-type readOptions struct {
+type getOptions struct {
 	collectorOptions
 	outFileOptions
 	subjectsOptions
@@ -39,7 +39,7 @@ type readOptions struct {
 }
 
 // Validate checks the options
-func (ro *readOptions) Validate() error {
+func (ro *getOptions) Validate() error {
 	errs := []error{}
 	errs = append(errs,
 		ro.collectorOptions.Validate(),
@@ -56,7 +56,7 @@ func (ro *readOptions) Validate() error {
 }
 
 // AddFlags adds the subcommands flags
-func (ro *readOptions) AddFlags(cmd *cobra.Command) {
+func (ro *getOptions) AddFlags(cmd *cobra.Command) {
 	ro.collectorOptions.AddFlags(cmd)
 	ro.outFileOptions.AddFlags(cmd)
 	ro.subjectsOptions.AddFlags(cmd)
@@ -81,48 +81,64 @@ func (ro *readOptions) AddFlags(cmd *cobra.Command) {
 	)
 }
 
-func addRead(parentCmd *cobra.Command) {
-	opts := &readOptions{}
-	readCmd := &cobra.Command{
-		Short: "read attestations from source repositories",
-		Long: fmt.Sprintf(`
-🥨 %s read
-The read subcommands lists attestations from a source repository. 
+// addGet registers the `get` subcommand and a hidden `read` alias
+// that shares the same implementation. Keeping the legacy name as a
+// hidden sibling means existing scripts continue to work without
+// cluttering the help output.
+func addGet(parentCmd *cobra.Command) {
+	parentCmd.AddCommand(newGetCmd(false))
+	parentCmd.AddCommand(newGetCmd(true))
+}
 
-By using the read subcommand, bnd can retrieve attestations from different
+func newGetCmd(asReadAlias bool) *cobra.Command {
+	opts := &getOptions{}
+
+	use := "get [flags] repo:collector/spec1 [repo:collector/spec2...]"
+	short := "get attestations from source repositories"
+	if asReadAlias {
+		use = "read [flags] repo:collector/spec1 [repo:collector/spec2...]"
+		short = "alias for `bnd get`"
+	}
+
+	cmd := &cobra.Command{
+		Short: short,
+		Long: fmt.Sprintf(`
+🥨 %s get
+The get subcommand retrieves attestations from a source repository.
+
+By using the get subcommand, bnd can retrieve attestations from different
 repositories. Under the hood, this subcommand uses AMPEL's attestation
 collector and its default drivers. Here are some use examples using different
 repository drivers:
 
 Read from a linear JSON file (jsonl):
 
-> bnd read jsonl:attestations.jsonl
+> bnd get jsonl:attestations.jsonl
 
 Read attestations from a git commit note:
 
-> bnd read note:slsa-framework/slsa-source-poc@82d60d3569844fa1d060000909c6b62e3d3fd947 
+> bnd get note:slsa-framework/slsa-source-poc@82d60d3569844fa1d060000909c6b62e3d3fd947
 
 Read from a GitHub release:
 
-> bnd read release:github.com/example/repo@v1.0.1
+> bnd get release:github.com/example/repo@v1.0.1
 
 Read from the GitHub attestations store and output them as a jsonl file:
 
-> bnd read --jsonl --out=attestations.jsonl github:owner/repo
+> bnd get --jsonl --out=attestations.jsonl github:owner/repo
 
 Read attestations from a directory:
 
-> bnd read fs:/home/files/attestations/
+> bnd get fs:/home/files/attestations/
 
-Read all SPDX attestations from a jsonl bundle, extraing the bare (unsigned)
-SBOMs:
+Read all SPDX attestations from a jsonl bundle, extracting the bare
+(unsigned) SBOMs:
 
-> bnd read --type="https://spdx.dev/Document" --predicates jsonl:attestations.jsonl
-
+> bnd get --type="https://spdx.dev/Document" --predicates jsonl:attestations.jsonl
 
 `, appname),
-		Use: "read [flags] repo:collector/spec1 [repo:collector/spec2...]",
-		// Example:           fmt.Sprintf(`%s read source`, appname),
+		Use:               use,
+		Hidden:            asReadAlias,
 		SilenceUsage:      false,
 		SilenceErrors:     true,
 		PersistentPreRunE: initLogging,
@@ -203,11 +219,11 @@ SBOMs:
 			return renderAttestations(opts, parsedKeys, atts, o)
 		},
 	}
-	opts.AddFlags(readCmd)
-	parentCmd.AddCommand(readCmd)
+	opts.AddFlags(cmd)
+	return cmd
 }
 
-func renderAttestations(opts *readOptions, verificationKeys []key.PublicKeyProvider, atts []attestation.Envelope, o io.Writer) error {
+func renderAttestations(opts *getOptions, verificationKeys []key.PublicKeyProvider, atts []attestation.Envelope, o io.Writer) error {
 	renderer, err := render.New(
 		render.WithVerifySignatures(opts.VerifySignatures),
 		render.WithPublicKey(verificationKeys...),
@@ -272,7 +288,7 @@ func renderAttestations(opts *readOptions, verificationKeys []key.PublicKeyProvi
 	return nil
 }
 
-func getOutputWriter(opts *readOptions) (o io.Writer, closer func(), err error) {
+func getOutputWriter(opts *getOptions) (o io.Writer, closer func(), err error) {
 	o = os.Stdout
 	closer = func() {}
 	if opts.jsonl && opts.OutPath != "" {
@@ -284,7 +300,7 @@ func getOutputWriter(opts *readOptions) (o io.Writer, closer func(), err error) 
 	return o, closer, nil
 }
 
-func buildFetchOptionFuncs(opts *readOptions) []collector.FetchOptionsFunc {
+func buildFetchOptionFuncs(opts *getOptions) []collector.FetchOptionsFunc {
 	funcs := []collector.FetchOptionsFunc{}
 	enabledFilters := []attestation.Filter{}
 

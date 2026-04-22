@@ -74,7 +74,7 @@ func Execute() {
 	addPack(rootCmd)
 	addUnpack(rootCmd)
 	addCommit(rootCmd)
-	addRead(rootCmd)
+	addGet(rootCmd)
 	addLs(rootCmd)
 	rootCmd.AddCommand(version.WithFont("doom"))
 
