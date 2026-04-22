@@ -126,7 +126,7 @@ Examples:
 				return fmt.Errorf("creating collector agent: %w", err)
 			}
 
-			funcs := buildFetchOptionFuncs(&readOptions{
+			funcs := buildFetchOptionFuncs(&getOptions{
 				collectorOptions: opts.collectorOptions,
 				predicateTypes:   opts.predicateTypes,
 			})

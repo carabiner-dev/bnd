@@ -68,7 +68,7 @@ Available Commands:
   pack        packs one or more bundles into a jsonl formatted file
   predicate   packs a new attestation into a bundle from a JSON predicate
   push        pushes an attestation or bundle to a repository
-  read        read attestations from source repositories
+  get         get attestations from source repositories
   statement   binds an in-toto attestation in a signed bundle
   unpack      unpacks attestations bundled in a jsonl file
   verify      Verifies a bundle signature
@@ -156,7 +156,7 @@ Attestation #1
 
 bnd supports a per-repository `.supplychain.yaml` configuration file. When
 present, it automatically provides default collector repositories and public
-keys to all subcommands that accept them (`read`, `ls`, `inspect`).
+keys to all subcommands that accept them (`get`, `ls`, `inspect`).
 
 ```yaml
 metadata:
