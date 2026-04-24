@@ -260,7 +260,7 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 
 	var slugs []string
 	for _, id := range sigv.GetSignature().GetIdentities() {
-		s := id.Slug()
+		s := id.Principal()
 		if s != "" {
 			slugs = append(slugs, s)
 		}

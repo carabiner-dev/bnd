@@ -63,7 +63,7 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 							if i > 0 {
 								idstr += strings.Repeat(" ", 19)
 							}
-							idstr += id.Slug() + "\n"
+							idstr += id.Principal() + "\n"
 						}
 					}
 				}
