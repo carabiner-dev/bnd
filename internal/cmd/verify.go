@@ -13,27 +13,32 @@ import (
 )
 
 type verifyOptions struct {
-	verifcationOptions
+	verifierSetOptions
+	identityMatchOptions
 	bundleOptions
 }
 
 // Validates the options in context with arguments
 func (o *verifyOptions) Validate() error {
 	return errors.Join(
-		o.verifcationOptions.Validate(),
+		o.verifierSetOptions.Validate(),
+		o.identityMatchOptions.Validate(),
 		o.bundleOptions.Validate(),
 	)
 }
 
 // AddFlags adds the flags to the subcommand
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
-	o.verifcationOptions.AddFlags(cmd)
+	o.verifierSetOptions.AddFlags(cmd)
+	o.identityMatchOptions.AddFlags(cmd)
 	o.bundleOptions.AddFlags(cmd)
 }
 
 // addVerify adds the verification command
 func addVerify(parentCmd *cobra.Command) {
-	opts := &verifyOptions{}
+	opts := &verifyOptions{
+		verifierSetOptions: defaultVerifierSetOptions(),
+	}
 	verifyCmd := &cobra.Command{
 		Short:             "Verifies a bundle signature",
 		Use:               "verify",
@@ -57,7 +62,10 @@ func addVerify(parentCmd *cobra.Command) {
 			// Silence usage here as options are validated
 			cmd.SilenceUsage = true
 
-			verifier := signer.NewVerifier()
+			verifier, err := signer.NewVerifierFromSet(opts.VerifierSet)
+			if err != nil {
+				return fmt.Errorf("building verifier: %w", err)
+			}
 
 			result, err := verifier.VerifyBundle(
 				opts.Path,
@@ -75,10 +83,17 @@ func addVerify(parentCmd *cobra.Command) {
 			}
 
 			fmt.Printf("\n✅ Bundle Verification OK!\n")
-			if !opts.SkipIdentityCheck {
+			if !opts.SkipIdentityCheck && result.VerifiedIdentity != nil {
 				fmt.Println("")
-				fmt.Printf("Signer:      %+s\n", result.VerifiedIdentity.SubjectAlternativeName.SubjectAlternativeName)
-				fmt.Printf("OIDC Issuer: %+s\n", result.VerifiedIdentity.Issuer.Issuer)
+				san := result.VerifiedIdentity.SubjectAlternativeName.SubjectAlternativeName
+				if san != "" {
+					fmt.Printf("Signer:      %s\n", san)
+				}
+				// SPIFFE bundles have no OIDC issuer; only print when
+				// we actually got one (sigstore path).
+				if issuer := result.VerifiedIdentity.Issuer.Issuer; issuer != "" {
+					fmt.Printf("OIDC Issuer: %s\n", issuer)
+				}
 			}
 			fmt.Println("")
 
