@@ -113,20 +113,26 @@ func TestSignerCommandsRegisterFlags(t *testing.T) {
 				tc.addFlags(cmd)
 			})
 
-			// The discriminator and at least one flag from each backend.
+			// The discriminators (--signing-backend, --signing-timestamp)
+			// plus at least one flag from each backend.
 			for _, flag := range []string{
 				"signing-backend",
+				"signing-timestamp",
 				"signing-key",           // KeysSign
 				"sigstore-roots",        // SigstoreCommon
 				"sigstore-instance",     // SigstoreSign
 				"sigstore-rekor-append", // SigstoreSign
-				"sigstore-timestamp",    // SigstoreSign
 				"sigstore-disable-sts",  // SigstoreSign
 				"spiffe-trust-domain",   // SpiffeCommon
 				"spiffe-socket",         // SpiffeSign
 			} {
 				require.NotNil(t, cmd.PersistentFlags().Lookup(flag), "flag %s must be registered", flag)
 			}
+
+			// --sigstore-timestamp is suppressed when bundled — the
+			// shared --signing-timestamp is the user-facing knob.
+			require.Nil(t, cmd.PersistentFlags().Lookup("sigstore-timestamp"),
+				"--sigstore-timestamp must NOT be registered when bundled via SignerSet")
 
 			// OIDC flags are registered but hidden by defaultSignerSetOptions.
 			oidc := cmd.PersistentFlags().Lookup("sigstore-oidc-client-id")
