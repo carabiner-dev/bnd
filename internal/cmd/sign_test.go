@@ -12,10 +12,8 @@ import (
 )
 
 // TestSignerOptionsValidate verifies that the command options structs
-// initialized with DefaultSigner can parse the embedded sigstore roots and
-// pass signer validation. This ensures the signing commands can start the
-// sigstore flow without errors like "OIDC issuer URL missing" or
-// "signing config not set".
+// initialized with the default signer-set (sigstore backend) parse the
+// embedded sigstore roots and pass signer validation.
 func TestSignerOptionsValidate(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -25,58 +23,61 @@ func TestSignerOptionsValidate(t *testing.T) {
 		{
 			name: "statement",
 			validate: func() error {
-				opts := &statementOptions{Signer: options.DefaultSigner}
-				return opts.Signer.Validate()
+				opts := &statementOptions{signerSetOptions: defaultSignerSetOptions()}
+				return opts.signerSetOptions.Validate()
 			},
 		},
 		{
 			name: "predicate",
 			validate: func() error {
-				opts := &predicateOptions{Signer: options.DefaultSigner}
-				return opts.Signer.Validate()
+				opts := &predicateOptions{signerSetOptions: defaultSignerSetOptions()}
+				return opts.signerSetOptions.Validate()
 			},
 		},
 		{
 			name: "commit",
 			validate: func() error {
-				opts := &commitOptions{Signer: options.DefaultSigner}
-				return opts.Signer.Validate()
+				opts := &commitOptions{signerSetOptions: defaultSignerSetOptions()}
+				return opts.signerSetOptions.Validate()
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.validate()
-			require.NoError(t, err)
+			require.NoError(t, tc.validate())
 		})
 	}
 }
 
-// TestSignerOptionsZeroValueFails verifies that a zero-valued Signer (without
-// DefaultSigner) fails validation, confirming commands must be initialized
-// with the default roots data.
+// TestSignerOptionsZeroValueFails verifies that a zero-valued
+// signerSetOptions (without the default constructor) fails validation,
+// confirming commands must be initialized via defaultSignerSetOptions().
 func TestSignerOptionsZeroValueFails(t *testing.T) {
 	t.Parallel()
-	opts := options.Signer{}
-	err := opts.Validate()
-	require.Error(t, err)
+	opts := signerSetOptions{}
+	require.Error(t, opts.Validate())
 }
 
-// TestSignerOptionsRootsPopulated verifies that after parsing roots, the
-// sigstore instance has the required signing configuration (OIDC issuer,
-// Fulcio URL, etc.) needed to start a signing flow.
-func TestSignerOptionsRootsPopulated(t *testing.T) {
+// TestSignerOptionsSigstoreBackendBuilds verifies that the default
+// signer set (no --signing-backend, no key/spiffe flags) auto-detects
+// sigstore and produces an *options.Signer with the instance config
+// needed to start a signing flow.
+func TestSignerOptionsSigstoreBackendBuilds(t *testing.T) {
 	t.Parallel()
-	signer := options.DefaultSigner
-	require.NoError(t, signer.ParseRoots())
+	opts := defaultSignerSetOptions()
+	require.Empty(t, opts.Backend, "Backend left empty so resolveBackend auto-detects")
 
-	require.NotEmpty(t, signer.OidcIssuerURL(), "OIDC issuer URL must be set after parsing roots")
-	require.NotEmpty(t, signer.FulcioURL(), "Fulcio URL must be set after parsing roots")
-	require.NotNil(t, signer.SigningConfig, "signing config must be set after parsing roots")
+	signerOpts, err := opts.BuildSigner()
+	require.NoError(t, err)
+	require.NotEmpty(t, signerOpts.OidcIssuerURL(), "OIDC issuer URL must be set after building signer options")
+	require.NotEmpty(t, signerOpts.FulcioURL(), "Fulcio URL must be set after building signer options")
+	require.NotNil(t, signerOpts.SigningConfig, "signing config must be set after building signer options")
 }
 
-// TestSignerCommandsRegisterFlags ensures the signing commands register their
-// flags without panicking and include the expected sigstore-prefixed flags.
+// TestSignerCommandsRegisterFlags ensures the signing commands register
+// flags from every backend (the bundled SignerSet exposes all of them
+// in --help, with --backend selecting which one Validate/BuildSigner
+// consults at runtime).
 func TestSignerCommandsRegisterFlags(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -86,21 +87,21 @@ func TestSignerCommandsRegisterFlags(t *testing.T) {
 		{
 			name: "statement",
 			addFlags: func(cmd *cobra.Command) {
-				opts := &statementOptions{Signer: options.DefaultSigner}
+				opts := &statementOptions{signerSetOptions: defaultSignerSetOptions()}
 				opts.AddFlags(cmd)
 			},
 		},
 		{
 			name: "predicate",
 			addFlags: func(cmd *cobra.Command) {
-				opts := &predicateOptions{Signer: options.DefaultSigner}
+				opts := &predicateOptions{signerSetOptions: defaultSignerSetOptions()}
 				opts.AddFlags(cmd)
 			},
 		},
 		{
 			name: "commit",
 			addFlags: func(cmd *cobra.Command) {
-				opts := &commitOptions{Signer: options.DefaultSigner}
+				opts := &commitOptions{signerSetOptions: defaultSignerSetOptions()}
 				opts.AddFlags(cmd)
 			},
 		},
@@ -111,13 +112,46 @@ func TestSignerCommandsRegisterFlags(t *testing.T) {
 			require.NotPanics(t, func() {
 				tc.addFlags(cmd)
 			})
-			// Verify the sigstore-prefixed OIDC flags are registered
-			f := cmd.PersistentFlags().Lookup("sigstore-oidc-client-id")
-			require.NotNil(t, f, "sigstore-oidc-client-id flag must be registered")
 
-			// Verify the sign flag is registered
-			f = cmd.PersistentFlags().Lookup("sign")
-			require.NotNil(t, f, "sign flag must be registered")
+			// The discriminator and at least one flag from each backend.
+			for _, flag := range []string{
+				"signing-backend",
+				"signing-key",           // KeysSign
+				"sigstore-roots",        // SigstoreCommon
+				"sigstore-instance",     // SigstoreSign
+				"sigstore-rekor-append", // SigstoreSign
+				"sigstore-timestamp",    // SigstoreSign
+				"sigstore-disable-sts",  // SigstoreSign
+				"spiffe-trust-domain",   // SpiffeCommon
+				"spiffe-socket",         // SpiffeSign
+			} {
+				require.NotNil(t, cmd.PersistentFlags().Lookup(flag), "flag %s must be registered", flag)
+			}
+
+			// OIDC flags are registered but hidden by defaultSignerSetOptions.
+			oidc := cmd.PersistentFlags().Lookup("sigstore-oidc-client-id")
+			require.NotNil(t, oidc, "sigstore-oidc-client-id must be registered")
+			require.True(t, oidc.Hidden, "sigstore-oidc-client-id should be hidden in --help")
+
+			require.NotNil(t, cmd.PersistentFlags().Lookup("sign"), "sign flag must be registered")
 		})
 	}
+}
+
+// TestSignerOptionsBackendSwitch verifies the --backend discriminator
+// drives BuildSigner: switching to BackendKey produces a Signer
+// configured for raw-key signing (no sigstore Instance plumbing).
+func TestSignerOptionsBackendSwitch(t *testing.T) {
+	t.Parallel()
+	opts := defaultSignerSetOptions()
+	opts.Backend = string(options.BackendKey)
+
+	// BackendKey requires at least one key path; this is a flag-time
+	// check, not a build-time check, so Validate passes.
+	require.NoError(t, opts.Validate())
+
+	// BuildSigner should fail because no signing key was supplied.
+	_, err := opts.BuildSigner()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no signing keys")
 }
