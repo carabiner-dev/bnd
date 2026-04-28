@@ -1,15 +1,36 @@
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 package cmd
 
 import (
 	"errors"
 
+	"github.com/carabiner-dev/signer/options"
 	"github.com/spf13/cobra"
 )
 
-type verifcationOptions struct {
-	RequireCTlog        bool
-	RequireTimestamp    bool
-	RequireTlog         bool
+// verifierSetOptions wraps options.VerifierSet — the bundled
+// verify-side OptionsSet. It registers --key (raw public-key
+// verification), --sigstore-roots, and the --spiffe-* namespace; the
+// verifier dispatches to the right backend by inspecting the bundle's
+// leaf certificate (SPIFFE leaf carries a spiffe:// URI SAN). Callers
+// supply trust material for whichever backends they're willing to
+// accept; the inactive children contribute nothing at validate time.
+type verifierSetOptions struct {
+	*options.VerifierSet
+}
+
+func defaultVerifierSetOptions() verifierSetOptions {
+	return verifierSetOptions{VerifierSet: options.DefaultVerifierSet()}
+}
+
+// identityMatchOptions covers the sigstore-style certificate-identity
+// assertions that aren't part of the OptionsSet families. SPIFFE
+// identity constraints (trust domain, path) flow through
+// --spiffe-trust-domain / --spiffe-path / --spiffe-path-regex on the
+// VerifierSet, so they're not duplicated here.
+type identityMatchOptions struct {
 	SkipIdentityCheck   bool
 	ExpectedIssuer      string
 	ExpectedIssuerRegex string
@@ -17,55 +38,27 @@ type verifcationOptions struct {
 	ExpectedSanRegex    string
 }
 
-func (vo *verifcationOptions) AddFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVar(
-		&vo.RequireCTlog, "ctlog", true,
-		"require and check RFC 3161 timestamps in the verified bundle",
-	)
-
-	cmd.PersistentFlags().BoolVar(
-		&vo.RequireTlog, "tlog", true,
-		"look for transparency log inclusion proof when verifying",
-	)
-
-	cmd.PersistentFlags().BoolVar(
-		&vo.RequireTimestamp, "timestamps", true,
-		"look for observer timestamps when verifying",
-	)
-
-	cmd.PersistentFlags().BoolVar(
-		&vo.SkipIdentityCheck, "skip-identity", false,
-		"allow skipping identity verification",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&vo.ExpectedSan, "identity", "",
-		"expected certificate identity (SAN)",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&vo.ExpectedSanRegex, "identity-regex", "",
-		"regex to check the certificate identity (SAN)",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&vo.ExpectedIssuer, "issuer", "",
-		"expected OIDC issuer for the certificate identity",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&vo.ExpectedIssuerRegex, "issuer-regex", "",
-		"regex to check the certificate's OIDC identity issuer",
-	)
+func (o *identityMatchOptions) AddFlags(cmd *cobra.Command) {
+	pf := cmd.PersistentFlags()
+	pf.BoolVar(&o.SkipIdentityCheck, "skip-identity", false,
+		"allow skipping identity verification")
+	pf.StringVar(&o.ExpectedSan, "identity", "",
+		"expected sigstore certificate identity (SAN)")
+	pf.StringVar(&o.ExpectedSanRegex, "identity-regex", "",
+		"regex to check the sigstore certificate identity (SAN)")
+	pf.StringVar(&o.ExpectedIssuer, "issuer", "",
+		"expected OIDC issuer for the certificate identity")
+	pf.StringVar(&o.ExpectedIssuerRegex, "issuer-regex", "",
+		"regex to check the certificate's OIDC identity issuer")
 }
 
-func (vo *verifcationOptions) Validate() error {
-	errs := []error{}
-	if vo.ExpectedIssuer != "" && vo.ExpectedIssuerRegex != "" {
-		errs = append(errs, errors.New("only one of issuer or issuer-regexp can be set at the same"))
+func (o *identityMatchOptions) Validate() error {
+	var errs []error
+	if o.ExpectedIssuer != "" && o.ExpectedIssuerRegex != "" {
+		errs = append(errs, errors.New("only one of --issuer or --issuer-regex can be set"))
 	}
-	if vo.ExpectedSan != "" && vo.ExpectedSanRegex != "" {
-		errs = append(errs, errors.New("only one of identity or identity-regexp can be set at the same"))
+	if o.ExpectedSan != "" && o.ExpectedSanRegex != "" {
+		errs = append(errs, errors.New("only one of --identity or --identity-regex can be set"))
 	}
 	return errors.Join(errs...)
 }

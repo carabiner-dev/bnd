@@ -16,7 +16,6 @@ import (
 	"github.com/carabiner-dev/collector/statement/intoto"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/signer"
-	"github.com/carabiner-dev/signer/options"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -26,7 +25,7 @@ import (
 
 type predicateOptions struct {
 	signOptions
-	options.Signer
+	signerSetOptions
 	outFileOptions
 	predicateFileOptions
 	SubjectValues    []string
@@ -57,7 +56,7 @@ func (po *predicateOptions) Validate() error {
 	errs := append([]error{},
 		po.signOptions.Validate(),
 		po.predicateFileOptions.Validate(),
-		po.Signer.Validate(),
+		po.signerSetOptions.Validate(),
 		po.outFileOptions.Validate(),
 	)
 
@@ -78,9 +77,7 @@ func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 	po.predicateFileOptions.AddFlags(cmd)
 	po.outFileOptions.AddFlags(cmd)
 
-	po.FlagPrefix = sigstoreFlagPrefix
-	po.HideOIDCOptions = true
-	po.Signer.AddFlags(cmd)
+	po.signerSetOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&po.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
@@ -107,7 +104,7 @@ var (
 
 func addPredicate(parentCmd *cobra.Command) {
 	opts := &predicateOptions{
-		Signer: options.DefaultSigner,
+		signerSetOptions: defaultSignerSetOptions(),
 	}
 
 	attCmd := &cobra.Command{
@@ -223,12 +220,19 @@ func addPredicate(parentCmd *cobra.Command) {
 
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
-			signer := signer.NewSigner()
-			signer.Options = opts.Signer
-
-			bundle, err := signer.SignStatement(attData)
+			sg, err := signer.NewSignerFromSet(opts.SignerSet)
 			if err != nil {
-				return fmt.Errorf("writing signing statement: %w", err)
+				return fmt.Errorf("building signer: %w", err)
+			}
+			defer func() {
+				if err := sg.Close(); err != nil {
+					logrus.Warnf("closing signer credentials: %v", err)
+				}
+			}()
+
+			artifact, err := sg.SignStatement(attData)
+			if err != nil {
+				return fmt.Errorf("signing statement: %w", err)
 			}
 
 			o, closer, err := opts.OutputWriter()
@@ -237,8 +241,8 @@ func addPredicate(parentCmd *cobra.Command) {
 			}
 			defer closer()
 
-			if err := signer.WriteBundle(bundle, o); err != nil {
-				return err
+			if _, err := artifact.WriteTo(o); err != nil {
+				return fmt.Errorf("writing artifact: %w", err)
 			}
 			return nil
 		},

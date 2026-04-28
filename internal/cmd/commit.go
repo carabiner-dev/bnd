@@ -16,7 +16,6 @@ import (
 	"github.com/carabiner-dev/collector/predicate"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	"github.com/carabiner-dev/signer"
-	"github.com/carabiner-dev/signer/options"
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -30,7 +29,7 @@ type commitOptions struct {
 	predicateFileOptions
 	signOptions
 	outFileOptions
-	options.Signer
+	signerSetOptions
 	CloneAddress     string
 	repoURL          string
 	repoPath         string
@@ -48,7 +47,7 @@ func (co *commitOptions) Validate() error {
 		co.signOptions.Validate(),
 		co.predicateFileOptions.Validate(),
 		co.outFileOptions.Validate(),
-		co.Signer.Validate(),
+		co.signerSetOptions.Validate(),
 	)
 
 	if co.Sha != "" && co.Tag != "" {
@@ -76,9 +75,7 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 	co.predicateFileOptions.AddFlags(cmd)
 	co.outFileOptions.AddFlags(cmd)
 
-	co.FlagPrefix = sigstoreFlagPrefix
-	co.HideOIDCOptions = true
-	co.Signer.AddFlags(cmd)
+	co.signerSetOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
 		&co.Sha, "sha", "", "commit hash to attest (defaults to HEAD of main branch)",
@@ -99,8 +96,8 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 
 func addCommit(parentCmd *cobra.Command) {
 	opts := &commitOptions{
-		Signer:      options.DefaultSigner,
-		remoteNames: []string{"upstream", "origin"},
+		signerSetOptions: defaultSignerSetOptions(),
+		remoteNames:      []string{"upstream", "origin"},
 	}
 	commitCmd := &cobra.Command{
 		Short: "attest git commits",
@@ -260,12 +257,19 @@ Same, but cloning the repo from a local clone:
 
 			logrus.Debugf("ATTESTATION:\n%s\n/ATTESTATION\n", string(attData))
 
-			sg := signer.NewSigner()
-			sg.Options = opts.Signer
-
-			bundle, err := sg.SignStatement(attData)
+			sg, err := signer.NewSignerFromSet(opts.SignerSet)
 			if err != nil {
-				return fmt.Errorf("writing signing statement: %w", err)
+				return fmt.Errorf("building signer: %w", err)
+			}
+			defer func() {
+				if err := sg.Close(); err != nil {
+					logrus.Warnf("closing signer credentials: %v", err)
+				}
+			}()
+
+			artifact, err := sg.SignStatement(attData)
+			if err != nil {
+				return fmt.Errorf("signing statement: %w", err)
 			}
 
 			o, closer, err := opts.OutputWriter()
@@ -274,8 +278,8 @@ Same, but cloning the repo from a local clone:
 			}
 			defer closer()
 
-			if err := sg.WriteBundle(bundle, o); err != nil {
-				return err
+			if _, err := artifact.WriteTo(o); err != nil {
+				return fmt.Errorf("writing artifact: %w", err)
 			}
 			return nil
 		},

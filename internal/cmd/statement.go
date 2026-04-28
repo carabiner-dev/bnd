@@ -10,13 +10,13 @@ import (
 	"os"
 
 	"github.com/carabiner-dev/signer"
-	"github.com/carabiner-dev/signer/options"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type statementOptions struct {
 	signOptions
-	options.Signer
+	signerSetOptions
 	outFileOptions
 	StatementPath string
 }
@@ -26,7 +26,7 @@ func (so *statementOptions) Validate() error {
 	errs := append([]error{},
 		so.signOptions.Validate(),
 		so.outFileOptions.Validate(),
-		so.Signer.Validate(),
+		so.signerSetOptions.Validate(),
 	)
 
 	if so.StatementPath == "" {
@@ -36,9 +36,7 @@ func (so *statementOptions) Validate() error {
 }
 
 func (so *statementOptions) AddFlags(cmd *cobra.Command) {
-	so.FlagPrefix = sigstoreFlagPrefix
-	so.HideOIDCOptions = true
-	so.Signer.AddFlags(cmd)
+	so.signerSetOptions.AddFlags(cmd)
 
 	so.signOptions.AddFlags(cmd)
 	so.outFileOptions.AddFlags(cmd)
@@ -51,7 +49,7 @@ func (so *statementOptions) AddFlags(cmd *cobra.Command) {
 
 func addStatement(parentCmd *cobra.Command) {
 	opts := &statementOptions{
-		Signer: options.DefaultSigner,
+		signerSetOptions: defaultSignerSetOptions(),
 	}
 	attCmd := &cobra.Command{
 		Short:             "binds an in-toto attestation in a signed bundle",
@@ -85,12 +83,19 @@ func addStatement(parentCmd *cobra.Command) {
 				return fmt.Errorf("reading statement data: %w", err)
 			}
 
-			signer := signer.NewSigner()
-			signer.Options = opts.Signer
-
-			bundle, err := signer.SignStatement(attData)
+			sg, err := signer.NewSignerFromSet(opts.SignerSet)
 			if err != nil {
-				return fmt.Errorf("writing signing statement: %w", err)
+				return fmt.Errorf("building signer: %w", err)
+			}
+			defer func() {
+				if err := sg.Close(); err != nil {
+					logrus.Warnf("closing signer credentials: %v", err)
+				}
+			}()
+
+			artifact, err := sg.SignStatement(attData)
+			if err != nil {
+				return fmt.Errorf("signing statement: %w", err)
 			}
 
 			o, closer, err := opts.OutputWriter()
@@ -99,8 +104,8 @@ func addStatement(parentCmd *cobra.Command) {
 			}
 			defer closer()
 
-			if err := signer.WriteBundle(bundle, o); err != nil {
-				return err
+			if _, err := artifact.WriteTo(o); err != nil {
+				return fmt.Errorf("writing artifact: %w", err)
 			}
 			return nil
 		},
