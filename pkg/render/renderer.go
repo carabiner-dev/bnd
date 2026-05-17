@@ -4,6 +4,8 @@
 package render
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"strings"
@@ -11,6 +13,8 @@ import (
 	"github.com/carabiner-dev/attestation"
 	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
 	signer "github.com/carabiner-dev/signer/api/v1"
+	protocommon "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 
 	"github.com/carabiner-dev/bnd/pkg/bundle"
 )
@@ -29,6 +33,61 @@ func New(fn ...FnOpt) (*Renderer, error) {
 
 type Renderer struct {
 	Options Options
+}
+
+// unverifiedIdentityFromEnvelope reads the SAN/issuer straight from the bundle's
+// cert so inspect can still show who signed when trust-chain verification fails.
+func unverifiedIdentityFromEnvelope(envelope attestation.Envelope) (san, issuer string) {
+	bndl, ok := envelope.(*ampelb.Envelope)
+	if !ok {
+		return "", ""
+	}
+	vm := bndl.GetVerificationMaterial()
+	if vm == nil {
+		return "", ""
+	}
+	var cert *protocommon.X509Certificate
+	if c := vm.GetCertificate(); c != nil {
+		cert = c
+	} else if chain := vm.GetX509CertificateChain(); chain != nil && len(chain.GetCertificates()) > 0 {
+		cert = chain.GetCertificates()[0]
+	}
+	if cert == nil {
+		return "", ""
+	}
+	x509cert, err := parseDERorPEM(cert.GetRawBytes())
+	if err != nil {
+		return "", ""
+	}
+	summary, err := certificate.SummarizeCertificate(x509cert)
+	if err != nil {
+		return "", ""
+	}
+	return summary.SubjectAlternativeName, summary.Issuer
+}
+
+// parseDERorPEM accepts either DER (per the sigstore bundle spec) or PEM
+// (seen in some non-conformant bundles in the wild).
+func parseDERorPEM(raw []byte) (*x509.Certificate, error) {
+	if cert, err := x509.ParseCertificate(raw); err == nil {
+		return cert, nil
+	}
+	if block, _ := pem.Decode(raw); block != nil {
+		return x509.ParseCertificate(block.Bytes)
+	}
+	return nil, fmt.Errorf("unable to parse certificate as DER or PEM")
+}
+
+// shortVerifyError trims the wrapped error chain to its first line.
+func shortVerifyError(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	if i := strings.IndexByte(msg, '\n'); i >= 0 {
+		msg = msg[:i]
+	}
+	return strings.TrimSpace(msg)
 }
 
 // DisplayEnvelopeDetails prints the details of an attestation
@@ -51,7 +110,18 @@ func (r *Renderer) DisplayEnvelopeDetails(w io.Writer, envelope attestation.Enve
 	if r.Options.VerifySignatures {
 		verifyErr := envelope.Verify(r.Options.PublicKeys)
 		if verifyErr != nil {
-			idstr = fmt.Sprintf("[verification error: %s]\n", verifyErr)
+			san, issuer := unverifiedIdentityFromEnvelope(envelope)
+			switch {
+			case san != "" && issuer != "":
+				idstr = fmt.Sprintf("%s [⚠ unverified]\n%sIssuer: %s\n%s⚠ %s\n",
+					san, strings.Repeat(" ", 20), issuer,
+					strings.Repeat(" ", 20), shortVerifyError(verifyErr))
+			case san != "":
+				idstr = fmt.Sprintf("%s [⚠ unverified]\n%s⚠ %s\n",
+					san, strings.Repeat(" ", 20), shortVerifyError(verifyErr))
+			default:
+				idstr = fmt.Sprintf("[⚠ unverified: %s]\n", shortVerifyError(verifyErr))
+			}
 		}
 		if v := att.GetVerification(); v != nil {
 			idstr = "[No identity found]\n"
