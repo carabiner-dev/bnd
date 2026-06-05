@@ -24,6 +24,45 @@ chores allowing you to:
 
 More information about each function can be found on each subcommand help screen.
 
+## Installation
+
+### Homebrew
+
+`bnd` is available through the [Carabiner homebrew tap](https://github.com/carabiner-dev/homebrew-tap):
+
+```
+brew install carabiner-dev/tap/bnd
+```
+
+Or add the tap first and then install:
+
+```
+brew tap carabiner-dev/tap
+brew install bnd
+```
+
+### Download a Binary
+
+Prebuilt binaries for Linux, macOS and Windows are attached to every
+[release](https://github.com/carabiner-dev/bnd/releases). Download the one that
+matches your platform, then make it executable and move it into your `PATH`. For
+example, to install the latest Linux amd64 build:
+
+```
+VERSION=$(curl -s https://api.github.com/repos/carabiner-dev/bnd/releases/latest | grep -m1 tag_name | cut -d '"' -f4)
+curl -LO "https://github.com/carabiner-dev/bnd/releases/download/${VERSION}/bnd-${VERSION}-linux-amd64"
+chmod +x "bnd-${VERSION}-linux-amd64"
+sudo mv "bnd-${VERSION}-linux-amd64" /usr/local/bin/bnd
+```
+
+### Go install
+
+If you have a Go toolchain installed, you can build and install `bnd` directly:
+
+```
+go install github.com/carabiner-dev/bnd@latest
+```
+
 ## Usage
 
 ```
