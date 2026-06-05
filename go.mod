@@ -10,7 +10,7 @@ require (
 	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/signer v0.4.6-0.20260428031626-298a979c4db9
 	github.com/carabiner-dev/termtable v1.1.0
-	github.com/go-git/go-git/v5 v5.19.0
+	github.com/go-git/go-git/v5 v5.19.1
 	github.com/in-toto/attestation v1.2.0
 	github.com/sigstore/protobuf-specs v0.5.1
 	github.com/sigstore/sigstore-go v1.1.4
