@@ -4,11 +4,11 @@ go 1.26.4
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.6
+	github.com/carabiner-dev/collector v0.3.7
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/signer v0.5.0
+	github.com/carabiner-dev/signer v0.5.1
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/in-toto/attestation v1.2.0
