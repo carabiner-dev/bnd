@@ -8,12 +8,12 @@ require (
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/jsonl v0.2.1
-	github.com/carabiner-dev/signer v0.5.1
+	github.com/carabiner-dev/signer v0.5.2
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/in-toto/attestation v1.2.0
 	github.com/sigstore/protobuf-specs v0.5.1
-	github.com/sigstore/sigstore-go v1.2.0
+	github.com/sigstore/sigstore-go v1.2.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
