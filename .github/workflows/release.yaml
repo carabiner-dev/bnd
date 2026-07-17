@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@HEAD
+        uses: carabiner-dev/actions/install/bnd@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
 
       - name: Check out code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -52,7 +52,7 @@ jobs:
 
       - name: Generate SBOM
         id: sbom
-        uses: carabiner-dev/actions/unpack/sbom@40e7a533857ac0f530b0fe2945c77042fabe1902 # v1.1.6
+        uses: carabiner-dev/actions/unpack/sbom@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
         with:
           push-to-release: ${{ steps.tag.outputs.tag_name }}
         env:
