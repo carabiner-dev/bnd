@@ -16,14 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: write   # create the release and upload binaries, SBOM, attestation
+      id-token: write   # Sigstore keyless signing of the SLSA provenance
+      actions: read     # tejolote reads run metadata to attest the build
 
     steps:
-      - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
-
       - name: Check out code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -34,9 +31,6 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
-
-      - name: Install tejolote
-        uses: kubernetes-sigs/release-actions/setup-tejolote@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
       - name: Set tag output
         id: tag
@@ -58,15 +52,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Generate Provenance
-        id: tejolote
+      # Observe this run and emit a signed SLSA provenance attestation covering
+      # the release artifacts. tejolote collects from the release (goreleaser
+      # publishes straight to it, not as workflow artifacts) and the attestation
+      # is signed with the release job's Sigstore identity. The installer
+      # (carabiner-dev/actions/install/bnd) verifies the downloaded binary
+      # against this file, so it must land on the release as attestations.jsonl.
+      - name: Generate provenance
+        id: provenance
+        uses: carabiner-dev/actions/slsa/generate@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        with:
+          artifacts: github://${{ github.repository }}/${{ steps.tag.outputs.tag_name }}
+          output: attestations.jsonl
+
+      - name: Publish provenance to release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            mkdir -p attestations
-            tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output attestations/provenance.json
-            bnd statement attestations/provenance.json -o attestations/bnd-${{ steps.tag.outputs.tag_name }}.provenance.json
-            bnd pack attestations/ > attestations.jsonl
-            gh release upload ${{ steps.tag.outputs.tag_name }} attestations.jsonl
-            bnd push github ${{github.repository}} attestations/bnd-${{ steps.tag.outputs.tag_name }}.provenance.json
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
+          ATTESTATION: ${{ steps.provenance.outputs.attestation }}
+        run: gh release upload "${TAG_NAME}" "${ATTESTATION}"
