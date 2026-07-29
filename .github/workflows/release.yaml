@@ -46,7 +46,7 @@ jobs:
 
       - name: Generate SBOM
         id: sbom
-        uses: carabiner-dev/actions/unpack/sbom@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        uses: carabiner-dev/actions/unpack/sbom@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
         with:
           push-to-release: ${{ steps.tag.outputs.tag_name }}
         env:
@@ -60,7 +60,7 @@ jobs:
       # against this file, so it must land on the release as attestations.jsonl.
       - name: Generate provenance
         id: provenance
-        uses: carabiner-dev/actions/slsa/generate@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        uses: carabiner-dev/actions/slsa/generate@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
         with:
           artifacts: github://${{ github.repository }}/${{ steps.tag.outputs.tag_name }}
           output: attestations.jsonl
