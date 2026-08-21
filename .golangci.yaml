@@ -60,7 +60,7 @@ linters:
     - godox
     - goheader
     - gomoddirectives
-    - gomodguard
+    - gomodguard_v2
     - goprintffuncname
     - gosec
     - gosmopolitan
@@ -108,6 +108,13 @@ linters:
     - whitespace
     # - wsl
     - zerologlint
+
+  exclusions:
+    rules:
+      # Test data literals don't need to be hoisted into constants.
+      - path: _test\.go
+        linters:
+          - goconst
 
   settings:
     gocyclo:

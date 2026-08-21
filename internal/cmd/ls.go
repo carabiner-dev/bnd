@@ -29,6 +29,8 @@ const (
 	lsHeaderPredicateType = "PREDICATE TYPE"
 	lsHeaderSignerID      = "SIGNER IDENTITY"
 	lsHeaderSubject       = "SUBJECT"
+
+	lsLabelUnsigned = "[unsigned]"
 )
 
 type lsOptions struct {
@@ -209,7 +211,7 @@ func buildLsRows(opts *lsOptions, verificationKeys []key.PublicKeyProvider, atts
 		}
 		identities := extractIdentities(renderer, env, att)
 		if len(identities) == 0 {
-			identities = []string{"[unsigned]"}
+			identities = []string{lsLabelUnsigned}
 		}
 
 		// First row carries predicate type, first identity and first subject.
@@ -246,7 +248,7 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 		if verifyErr != nil {
 			return []string{"[unverified]"}
 		}
-		return []string{"[unsigned]"}
+		return []string{lsLabelUnsigned}
 	}
 
 	if !v.GetVerified() {
@@ -255,7 +257,7 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 
 	sigv, ok := v.(*signer.Verification)
 	if !ok || sigv.GetSignature().GetIdentities() == nil {
-		return []string{"[unsigned]"}
+		return []string{lsLabelUnsigned}
 	}
 
 	var slugs []string
@@ -266,7 +268,7 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 		}
 	}
 	if len(slugs) == 0 {
-		return []string{"[unsigned]"}
+		return []string{lsLabelUnsigned}
 	}
 	return slugs
 }
