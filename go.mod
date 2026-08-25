@@ -12,7 +12,7 @@ require (
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/in-toto/attestation v1.2.0
-	github.com/sigstore/protobuf-specs v0.5.1
+	github.com/sigstore/protobuf-specs v0.5.2
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/sirupsen/logrus v1.10.1
 	github.com/spf13/cobra v1.10.2
