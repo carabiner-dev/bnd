@@ -6,8 +6,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/envelope"
 	"github.com/carabiner-dev/collector/repository/github"
@@ -86,7 +89,11 @@ The push subcommand lets you send bundled attestations to remote storage
 locations. Initial support is provided for the GitHub attestation store
 but more drivers are on the way.
 
-`, appname),
+Bundles can be given as individual files, as directories (every file at
+their top level is pushed) or as .jsonl files holding one bundle per line,
+such as those written by %s pack.
+
+`, appname, appname),
 		Use:           "github [flags] [org/repo [bundle.json...]]",
 		SilenceUsage:  false,
 		SilenceErrors: true,
@@ -99,7 +106,11 @@ Same but with shortcut positional arguments:
 
 %s push github myorg/repo bundle.json
 
-`, appname, appname),
+Push every attestation in a packed jsonl file:
+
+%s push github myorg/repo attestations.jsonl
+
+`, appname, appname, appname),
 		PersistentPreRunE: initLogging,
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) > 0 && opts.RepoName != "" && opts.RepoOrg != "" {
@@ -144,7 +155,7 @@ Same but with shortcut positional arguments:
 			}
 
 			// Parse all envelopes
-			envs, err := envelope.Parsers.ParseFiles(opts.Bundles)
+			envs, err := parseBundles(opts.Bundles)
 			if err != nil {
 				return fmt.Errorf("parsing envelopes: %w", err)
 			}
@@ -157,4 +168,68 @@ Same but with shortcut positional arguments:
 	}
 	opts.AddFlags(pushCmd)
 	parentCmd.AddCommand(pushCmd)
+}
+
+// parseBundles parses the envelopes found in paths. Each path may be a
+// bundle file, a .jsonl file with one bundle per line or a directory, whose
+// top-level files are handled the same way. Subdirectories are not traversed.
+func parseBundles(paths []string) ([]attestation.Envelope, error) {
+	var bundlePaths, jsonlPaths []string
+	sortPath := func(path string) {
+		if strings.EqualFold(filepath.Ext(path), ".jsonl") {
+			jsonlPaths = append(jsonlPaths, path)
+		} else {
+			bundlePaths = append(bundlePaths, path)
+		}
+	}
+
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("stat %s: %w", path, err)
+		}
+		if !info.IsDir() {
+			sortPath(path)
+			continue
+		}
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", path, err)
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			sortPath(filepath.Join(path, e.Name()))
+		}
+	}
+
+	envs := []attestation.Envelope{}
+	if len(bundlePaths) > 0 {
+		parsed, err := envelope.Parsers.ParseFiles(bundlePaths)
+		if err != nil {
+			return nil, err
+		}
+		envs = append(envs, parsed...)
+	}
+
+	jsonlParser := envelope.NewJSONL()
+	for _, path := range jsonlPaths {
+		parsed, err := parseJSONLFile(jsonlParser, path)
+		if err != nil {
+			return nil, fmt.Errorf("parsing %s: %w", path, err)
+		}
+		envs = append(envs, parsed...)
+	}
+	return envs, nil
+}
+
+// parseJSONLFile opens path and parses the bundles in it, one per line.
+func parseJSONLFile(parser *envelope.JsonlParser, path string) ([]attestation.Envelope, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening file: %w", err)
+	}
+	defer f.Close() //nolint:errcheck
+	return parser.ParseStream(f)
 }
