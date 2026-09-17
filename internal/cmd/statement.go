@@ -18,6 +18,7 @@ type statementOptions struct {
 	signOptions
 	signerSetOptions
 	outFileOptions
+	singleDigestOptions
 	StatementPath string
 }
 
@@ -40,6 +41,7 @@ func (so *statementOptions) AddFlags(cmd *cobra.Command) {
 
 	so.signOptions.AddFlags(cmd)
 	so.outFileOptions.AddFlags(cmd)
+	so.singleDigestOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVarP(
 		&so.StatementPath, "statement", "s", "",
@@ -81,6 +83,11 @@ func addStatement(parentCmd *cobra.Command) {
 			attData, err := io.ReadAll(f)
 			if err != nil {
 				return fmt.Errorf("reading statement data: %w", err)
+			}
+
+			attData, err = opts.applyToJSON(attData)
+			if err != nil {
+				return fmt.Errorf("reducing subject digests: %w", err)
 			}
 
 			sg, err := signer.NewSignerFromSet(opts.SignerSet)
