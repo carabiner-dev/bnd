@@ -28,6 +28,7 @@ type predicateOptions struct {
 	signerSetOptions
 	outFileOptions
 	predicateFileOptions
+	singleDigestOptions
 	SubjectValues    []string
 	SubjectHashes    []string
 	SubjectPaths     []string
@@ -78,6 +79,7 @@ func (po *predicateOptions) AddFlags(cmd *cobra.Command) {
 	po.outFileOptions.AddFlags(cmd)
 
 	po.signerSetOptions.AddFlags(cmd)
+	po.singleDigestOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&po.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
@@ -211,6 +213,7 @@ func addPredicate(parentCmd *cobra.Command) {
 				return fmt.Errorf("hashing passed files: %w", err)
 			}
 			statement.Subject = append(statement.Subject, hashes.ToResourceDescriptors()...)
+			opts.applyToStatement(statement)
 
 			// Marshal the attestation data
 			attData, err := statement.ToJson()

@@ -30,6 +30,7 @@ type commitOptions struct {
 	signOptions
 	outFileOptions
 	signerSetOptions
+	singleDigestOptions
 	CloneAddress     string
 	repoURL          string
 	repoPath         string
@@ -76,6 +77,7 @@ func (co *commitOptions) AddFlags(cmd *cobra.Command) {
 	co.outFileOptions.AddFlags(cmd)
 
 	co.signerSetOptions.AddFlags(cmd)
+	co.singleDigestOptions.AddFlags(cmd)
 
 	cmd.PersistentFlags().StringVar(
 		&co.Sha, "sha", "", "commit hash to attest (defaults to HEAD of main branch)",
@@ -242,12 +244,13 @@ Same, but cloning the repo from a local clone:
 				Uri:              locator,
 				DownloadLocation: locator,
 				Digest: map[string]string{
-					"sha1":      head.CommitSHA,
-					"gitCommit": head.CommitSHA,
+					algoSHA1:      head.CommitSHA,
+					algoGitCommit: head.CommitSHA,
 				},
 			}
 
 			statement.AddSubject(subject)
+			opts.applyToStatement(statement)
 
 			// Marshal the attestation data
 			attData, err := statement.ToJson()

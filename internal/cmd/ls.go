@@ -285,8 +285,8 @@ var hashPriority = []string{
 	"sha3-256",
 	"sha3",
 	"sha224",
-	"sha1",
-	"gitCommit",
+	algoSHA1,
+	algoGitCommit,
 	"md5",
 }
 
