@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -132,5 +133,36 @@ func TestPrintLsTableNoFramingGlyphs(t *testing.T) {
 	// rule under the header.
 	for _, r := range "│┌┐└┘├┤┬┴┼+|═║╔╗╚╝╠╣╦╩╬" {
 		require.NotContains(t, output, string(r), "unexpected frame glyph %q", r)
+	}
+}
+
+func TestHashPriorityNames(t *testing.T) {
+	t.Parallel()
+	for _, algo := range hashPriority {
+		require.Contains(
+			t, intoto.HashAlgorithms, algo,
+			"hashPriority entry %q is not an algorithm in-toto defines", algo,
+		)
+	}
+}
+
+func TestPickDigest(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name    string
+		digests map[string]string
+		want    string
+	}{
+		{"sha256-over-md5", map[string]string{"sha256": "a", "md5": "b"}, "sha256"},
+		{"sha3_512-over-md5", map[string]string{"sha3_512": "a", "md5": "b"}, "sha3_512"},
+		{"sha3_256-over-sha1", map[string]string{"sha3_256": "a", "sha1": "b"}, "sha3_256"},
+		{"sha512_256-over-md5", map[string]string{"sha512_256": "a", "md5": "b"}, "sha512_256"},
+		{"md5-alone", map[string]string{"md5": "b"}, "md5"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			algo, _ := pickDigest(tt.digests)
+			require.Equal(t, tt.want, algo)
+		})
 	}
 }
