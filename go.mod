@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/bnd
 
-go 1.26.5
+go 1.27.2
 
 require (
 	github.com/carabiner-dev/command v0.3.4
