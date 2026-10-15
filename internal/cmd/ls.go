@@ -134,7 +134,7 @@ Examples:
 			})
 
 			var atts []attestation.Envelope
-			if len(opts.subjects) > 0 {
+			if len(opts.Subjects) > 0 {
 				subs, err2 := opts.getSubjects()
 				if err2 != nil {
 					return err2
@@ -152,14 +152,14 @@ Examples:
 				return fmt.Errorf("building rows: %w", err)
 			}
 
-			hasSubjects := len(opts.subjects) > 0
+			hasSubjects := len(opts.Subjects) > 0
 			hasTypes := len(opts.predicateTypes) > 0
 
 			switch {
 			case hasSubjects && hasTypes:
-				printLsTableFiltered(os.Stdout, rows, opts.subjects, opts.predicateTypes)
+				printLsTableFiltered(os.Stdout, rows, opts.Subjects, opts.predicateTypes)
 			case hasSubjects:
-				printLsTableBySubject(os.Stdout, rows, opts.subjects)
+				printLsTableBySubject(os.Stdout, rows, opts.Subjects)
 			case hasTypes:
 				printLsTableByType(os.Stdout, rows, opts.predicateTypes)
 			default:
