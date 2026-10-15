@@ -191,10 +191,10 @@ Read all SPDX attestations from a jsonl bundle, extracting the bare
 
 			var atts []attestation.Envelope
 			// Call the optimized methods if subjects are specified
-			if len(opts.subjects) > 0 {
+			if len(opts.Subjects) > 0 {
 				subs, err2 := opts.getSubjects()
 				if err2 != nil {
-					return nil
+					return err2
 				}
 				atts, err = agent.FetchAttestationsBySubject(cmd.Context(), subs)
 			} else {
