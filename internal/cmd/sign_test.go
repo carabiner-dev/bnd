@@ -6,7 +6,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/carabiner-dev/signer/options"
+	"github.com/policylabs/signer/options"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )

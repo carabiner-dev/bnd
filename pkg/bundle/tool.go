@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/collector/envelope"
-	"github.com/carabiner-dev/collector/statement/intoto"
+	"github.com/policylabs/attestation"
+	"github.com/policylabs/collector/envelope"
+	"github.com/policylabs/collector/statement/intoto"
 	protobundle "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"github.com/sirupsen/logrus"
 )

@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/collector"
-	"github.com/carabiner-dev/collector/envelope"
-	"github.com/carabiner-dev/collector/repository/github"
+	"github.com/policylabs/attestation"
+	"github.com/policylabs/collector"
+	"github.com/policylabs/collector/envelope"
+	"github.com/policylabs/collector/repository/github"
 	"github.com/spf13/cobra"
 )
 

@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/carabiner-dev/signer"
+	"github.com/policylabs/signer"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

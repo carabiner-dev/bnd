@@ -13,12 +13,12 @@ import (
 	"os"
 	"slices"
 
-	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/collector"
-	"github.com/carabiner-dev/collector/filters"
 	"github.com/carabiner-dev/command/keys"
 	"github.com/carabiner-dev/jsonl"
-	"github.com/carabiner-dev/signer/key"
+	"github.com/policylabs/attestation"
+	"github.com/policylabs/collector"
+	"github.com/policylabs/collector/filters"
+	"github.com/policylabs/signer/key"
 	"github.com/spf13/cobra"
 
 	"github.com/carabiner-dev/bnd/internal/supplychain"
