@@ -10,9 +10,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/carabiner-dev/attestation"
-	ampelb "github.com/carabiner-dev/collector/envelope/bundle"
-	signer "github.com/carabiner-dev/signer/api/v1"
+	"github.com/policylabs/attestation"
+	ampelb "github.com/policylabs/collector/envelope/bundle"
+	signer "github.com/policylabs/signer/api/v1"
 	protocommon "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 

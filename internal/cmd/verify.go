@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/carabiner-dev/signer"
-	"github.com/carabiner-dev/signer/options"
+	"github.com/policylabs/signer"
+	"github.com/policylabs/signer/options"
 	"github.com/spf13/cobra"
 )
 

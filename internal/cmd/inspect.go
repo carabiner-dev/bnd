@@ -10,9 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/command/keys"
 	"github.com/carabiner-dev/jsonl"
+	"github.com/policylabs/attestation"
 	"github.com/spf13/cobra"
 
 	"github.com/carabiner-dev/bnd/internal/supplychain"

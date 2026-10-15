@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/carabiner-dev/collector/statement/intoto"
+	"github.com/policylabs/collector/statement/intoto"
 	"github.com/spf13/cobra"
 )
 

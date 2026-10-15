@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/policylabs/attestation"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
 )

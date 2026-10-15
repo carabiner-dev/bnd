@@ -12,12 +12,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/command/keys"
-	signer "github.com/carabiner-dev/signer/api/v1"
-	"github.com/carabiner-dev/signer/key"
 	"github.com/carabiner-dev/termtable"
+	"github.com/policylabs/attestation"
+	"github.com/policylabs/collector"
+	signer "github.com/policylabs/signer/api/v1"
+	"github.com/policylabs/signer/key"
 	"github.com/spf13/cobra"
 
 	"github.com/carabiner-dev/bnd/internal/supplychain"

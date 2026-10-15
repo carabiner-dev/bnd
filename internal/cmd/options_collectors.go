@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/carabiner-dev/collector"
+	"github.com/policylabs/collector"
 	"github.com/spf13/cobra"
 )
 

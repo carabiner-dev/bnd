@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/carabiner-dev/signer/key"
+	"github.com/policylabs/signer/key"
 	"sigs.k8s.io/release-utils/http"
 )
 

@@ -3,7 +3,7 @@
 
 package render
 
-import "github.com/carabiner-dev/signer/key"
+import "github.com/policylabs/signer/key"
 
 type Options struct {
 	VerifySignatures bool
