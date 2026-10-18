@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 
+	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/policylabs/collector/statement/intoto"
 	"github.com/spf13/cobra"
 )
@@ -17,15 +18,32 @@ import (
 // but sha1 is the algorithm the rest of the tooling keys subjects on.
 // Algorithms not listed rank below all of these.
 var digestStrength = []string{
-	"sha3_512", "sha512", "sha3_384", "sha384", "sha512_256", "sha3_256", "sha256",
-	"sha512_224", "sha3_224", "sha224", algoSHA1, algoGitCommit, "gitTag", "gitTree",
-	"gitBlob", "dirHash", "md5",
+	algoSHA3_512, algoSHA512, algoSHA3_384, algoSHA384, algoSHA512_256, algoSHA3_256,
+	algoSHA256, algoSHA512_224, algoSHA3_224, algoSHA224, algoSHA1, algoGitCommit,
+	algoGitTag, algoGitTree, algoGitBlob, algoDirHash, algoMD5,
 }
 
-// Digest algorithm names used across the commands
+// Digest algorithm names used across the commands. These are taken from the
+// in-toto constants so the spelling cannot drift from what attestations
+// actually carry.
 const (
-	algoSHA1      = "sha1"
-	algoGitCommit = "gitCommit"
+	algoMD5        = string(v1.AlgorithmMD5)
+	algoSHA1       = string(v1.AlgorithmSHA1)
+	algoSHA224     = string(v1.AlgorithmSHA224)
+	algoSHA512_224 = string(v1.AlgorithmSHA512_224)
+	algoSHA256     = string(v1.AlgorithmSHA256)
+	algoSHA512_256 = string(v1.AlgorithmSHA512_256)
+	algoSHA384     = string(v1.AlgorithmSHA384)
+	algoSHA512     = string(v1.AlgorithmSHA512)
+	algoSHA3_224   = string(v1.AlgorithmSHA3_224)
+	algoSHA3_256   = string(v1.AlgorithmSHA3_256)
+	algoSHA3_384   = string(v1.AlgorithmSHA3_384)
+	algoSHA3_512   = string(v1.AlgorithmSHA3_512)
+	algoGitBlob    = string(v1.AlgorithmGitBlob)
+	algoGitCommit  = string(v1.AlgorithmGitCommit)
+	algoGitTag     = string(v1.AlgorithmGitTag)
+	algoGitTree    = string(v1.AlgorithmGitTree)
+	algoDirHash    = string(v1.AlgorithmDirHash)
 )
 
 // singleDigestOptions adds the --single-subject flag to commands that
