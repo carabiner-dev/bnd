@@ -277,17 +277,19 @@ func extractIdentities(r *render.Renderer, env attestation.Envelope, att attesta
 // when a subject carries more than one. sha256 is preferred first; the rest
 // are ordered from strongest to weakest.
 var hashPriority = []string{
-	"sha256",
-	"sha512",
-	"sha384",
-	"sha3-512",
-	"sha3-384",
-	"sha3-256",
-	"sha3",
-	"sha224",
+	algoSHA256,
+	algoSHA512,
+	algoSHA384,
+	algoSHA3_512,
+	algoSHA3_384,
+	algoSHA512_256,
+	algoSHA3_256,
+	algoSHA224,
+	algoSHA512_224,
+	algoSHA3_224,
 	algoSHA1,
 	algoGitCommit,
-	"md5",
+	algoMD5,
 }
 
 // pickDigest returns the algorithm and value of the preferred digest in the
