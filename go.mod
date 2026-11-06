@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
-	sigs.k8s.io/release-sdk v0.13.0
+	sigs.k8s.io/release-sdk v0.13.1
 	sigs.k8s.io/release-utils v0.12.5
 )
 
@@ -185,7 +185,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/cosign/v3 v3.1.3 // indirect
+	github.com/sigstore/cosign/v3 v3.1.4 // indirect
 	github.com/sigstore/gitsign v0.17.1 // indirect
 	github.com/sigstore/rekor v1.5.5 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.4.0 // indirect
