@@ -23,7 +23,7 @@ jobs:
 
       - name: Determine Go versions
         id: versions
-        uses: carabiner-dev/actions/go/versions@63d43b57262e65927864c8f7ca0a6a8efe06acc0 # main
+        uses: carabiner-dev/actions/go/versions@2f56fd66c5ef961f72bca3dbacbbfbd9acc717ee # main
 
   golangci:
     name: lint
